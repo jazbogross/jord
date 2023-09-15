@@ -1,7 +1,7 @@
 [build]
   base    = "/"
   publish = "public"
-  command = "ls -al hugo"
+  command = "hugo"
 
 [build.environment]
   HUGO_VERSION = "0.112.5"
