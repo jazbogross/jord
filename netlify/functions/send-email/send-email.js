@@ -12,6 +12,8 @@ const DETAILS_MIN_LENGTH = 10;
 const DETAILS_MAX_LENGTH = 1e3;
 
 const handler = async (event) => {
+  console.log('Received event body:', event.body);
+
   if (!process.env.CONTACT_EMAIL) {
     return {
       statusCode: 500,
