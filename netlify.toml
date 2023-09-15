@@ -5,3 +5,4 @@
 
 [build.environment]
   HUGO_VERSION = "0.112.5"
+  CONTACT_EMAIL = "jazbogross@gmail.com"
