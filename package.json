@@ -9,8 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "sendmail": "^1.6.1"
   },
-  "devDependencies": {},
   "description": ""
 }
