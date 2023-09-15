@@ -1,0 +1,17 @@
+{{ define "head" }} 
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<base href= "{{ $.Site.BaseURL }}">
+<title>{{ $.Site.Title }}</title>
+<meta name="author" content="{{ .Site.Title }}">
+<meta name="description" content="indsamlede ord">
+<meta name="robots" content="index, follow" />
+<meta name="MobileOptimized" content="320">
+<meta name="HandheldFriendly" content="True">
+
+{{ partial "head-css.html" . }}
+
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+{{ end }}

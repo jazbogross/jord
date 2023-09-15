@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="{{ $.Site.Language.Lang }}">
+
+<head>
+
+  {{ block "head" . }}{{end}}
+
+</head>
+
+<body>
+
+  {{ block "topnav" . }}{{end}}
+
+  {{ block "main" . }}{{end}}
+
+</body>
+{{ $javascript := resources.Get "js/main.js" | resources.Minify }}
+<script src="{{- $javascript.Permalink -}}"></script>
+</html>
