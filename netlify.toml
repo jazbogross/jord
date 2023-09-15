@@ -4,4 +4,4 @@
   command = "ls -al hugo"
 
 [build.environment]
-  HUGO_VERSION = "0.112.5+extended"
+  HUGO_VERSION = "0.112.5"
