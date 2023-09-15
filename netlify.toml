@@ -1,2 +1,4 @@
-[build.environment]
-TZ='Europe/Copenhagen'
+[build]
+  base    = "/"
+  publish = "public"
+  command = "hugo"
