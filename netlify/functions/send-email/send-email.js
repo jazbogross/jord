@@ -19,11 +19,35 @@ const handler = async (event) => {
     };
   }
 
+  if (!event.body || typeof event.body !== 'string') {
+    return {
+      statusCode: 400,
+      body: 'Invalid request body',
+    };
+  }
+
   const body = JSON.parse(event.body);
 
   // Fetching data from the JSON file
   const response = await fetch('https://soft-crostata-20d468.netlify.app/words.json');
   const data = await response.json();
+
+  // Validate the fetched data
+  if (!Array.isArray(data)) {
+    return {
+      statusCode: 500,
+      body: 'Fetched data is not an array',
+    };
+  }
+
+  for (const item of data) {
+    if (typeof item !== 'object' || !('word' in item) || !('fontSize' in item) || !('date' in item)) {
+      return {
+        statusCode: 500,
+        body: 'Fetched data is not properly structured',
+      };
+    }
+  }
 
   // Validation logic
   try {
@@ -71,3 +95,4 @@ const handler = async (event) => {
 };
 
 module.exports = { handler };
+
