@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', (event) => {
+    const formContainer = document.querySelector('#form-container');
     const form = document.querySelector('form');
   
     form.addEventListener('submit', async function(e) {
@@ -41,7 +42,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         console.error('Parse Error:', e);
       }
     }
-    form.remove();
+    formContainer.remove();
   });
   
 });
