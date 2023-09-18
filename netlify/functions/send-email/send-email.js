@@ -1,100 +1,55 @@
-const process = require('process');
-const { promisify } = require('util');
 const fetch = require('node-fetch');
-const sendMailLib = require('sendmail');
-const { validateEmail, validateLength } = require('./validations.js');
+const nodemailer = require('nodemailer');
 
-const sendMail = promisify(sendMailLib());
+exports.handler = async (event, context) => {
+  try {
+    // Fetch JSON data from URL
+    const response = await fetch('https://soft-crostata-20d468.netlify.app/words.json');
+    const data = await response.json();
 
-const NAME_MIN_LENGTH = 3;
-const NAME_MAX_LENGTH = 50;
-const DETAILS_MIN_LENGTH = 10;
-const DETAILS_MAX_LENGTH = 1e3;
+    // Get the current date and time
+    const now = new Date();
+    const nowFormatted = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-const handler = async (event) => {
-  console.log('Received event body:', event.body);
 
-  if (!process.env.CONTACT_EMAIL) {
+    // Filter out words that were not submitted in the last 24 hours
+    const filteredData = data.filter(item => {
+      const itemDate = new Date(item.date);
+      return (now - itemDate) < 86400000; // Less than 24 hours (in milliseconds)
+    });
+
+    // Extract only the 'word' values and join them with new lines
+    const wordsOnly = filteredData.map(item => item.word).join('\n');
+
+    // Create a Nodemailer transporter
+    const transporter = nodemailer.createTransport({
+      service: 'gmail', // Replace with your email service
+      auth: {
+        user: 'theatrebuilding2@gmail.com', // Replace with your email
+        pass: 'fehphgpaxakdrsyo' // Replace with your email password
+      }
+    });
+
+    // Email options
+    const mailOptions = {
+      from: 'theatrebuilding2@gmail.com',
+      to: 'jazbogross@gmail.com',
+      subject: `Ord fra Jorden (${nowFormatted})`,
+      text: `Hej Monia,\n\nFolk har lagt mærke til de her ord: \n\n${wordsOnly}\n\nHav en dejlig dag,\nJorden`
+    };
+
+    // Send the email
+    const emailResponse = await transporter.sendMail(mailOptions);
+    
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: 'Successfully fetched data and sent email', emailResponse })
+    };
+  } catch (error) {
+    console.error('Error:', error);
     return {
       statusCode: 500,
-      body: 'process.env.CONTACT_EMAIL must be defined',
+      body: JSON.stringify({ message: 'Failed to fetch data or send email' })
     };
-  }
-
-  if (!event.body || typeof event.body !== 'string') {
-    return {
-      statusCode: 400,
-      body: 'Invalid request body',
-    };
-  }
-
-  const body = JSON.parse(event.body);
-
-  // Fetching data from the JSON file
-  const response = await fetch('https://soft-crostata-20d468.netlify.app/words.json');
-  const data = await response.json();
-
-  // Validate the fetched data
-  if (!Array.isArray(data)) {
-    return {
-      statusCode: 500,
-      body: 'Fetched data is not an array',
-    };
-  }
-
-  for (const item of data) {
-    if (typeof item !== 'object' || !('word' in item) || !('fontSize' in item) || !('date' in item)) {
-      return {
-        statusCode: 500,
-        body: 'Fetched data is not properly structured',
-      };
-    }
-  }
-
-  // Validation logic
-  try {
-    validateLength('body.name', body.name, NAME_MIN_LENGTH, NAME_MAX_LENGTH);
-  } catch (error) {
-    return {
-      statusCode: 403,
-      body: error.message,
-    };
-  }
-
-  try {
-    validateEmail('body.email', body.email);
-  } catch (error) {
-    return {
-      statusCode: 403,
-      body: error.message,
-    };
-  }
-
-  try {
-    validateLength('body.details', body.details, DETAILS_MIN_LENGTH, DETAILS_MAX_LENGTH);
-  } catch (error) {
-    return {
-      statusCode: 403,
-      body: error.message,
-    };
-  }
-
-  // Prepare email descriptor
-  const descriptor = {
-    from: `"Automated Email" <no-reply@gql-modules.com>`,
-    to: process.env.CONTACT_EMAIL,
-    subject: 'Word Update',
-    text: `Here is your daily info: ${JSON.stringify(data)}`,
-  };
-
-  // Send email
-  try {
-    await sendMail(descriptor);
-    return { statusCode: 200, body: '' };
-  } catch (error) {
-    return { statusCode: 500, body: error.message };
   }
 };
-
-module.exports = { handler };
-

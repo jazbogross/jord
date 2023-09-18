@@ -1,6 +1,9 @@
 let container = document.getElementById('word-container');
 let allWords = [];
 
+let date = Date();
+console.log(date);
+
 fetch('words.json')
   .then(response => response.json())
   .then(data => {
