@@ -1,9 +1,14 @@
 document.addEventListener('DOMContentLoaded', (event) => {
     const formContainer = document.getElementById('formContainer');
+    const wordAgain = document.getElementById('wordAgain');
     const form = document.querySelector('form');
   
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
+      formContainer.style.display = 'none'; // Hide the form immediately
+      wordAgain.addEventListener("click", function(){ 
+        formContainer.style.display = 'block'; // Display again if the user clicks the button to add another word
+      });
   
       // Execute reCAPTCHA and get the token
       const recaptchaToken = await grecaptcha.execute('6LcYAzUoAAAAAKnfXcLaFMzaqOJAkxgsKJmmRsPn', { action: 'submit' });
@@ -26,7 +31,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     if (response.ok) {
       const data = await response.json();
       console.log('Success:', data);
-      formContainer.style.display = 'none'; // Close the form
     } else {
       // Log the text response from the server for debugging
       const text = await response.text();
