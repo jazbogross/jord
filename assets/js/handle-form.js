@@ -41,5 +41,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         console.error('Parse Error:', e);
       }
     }
+    form.remove();
   });
+  
 });
