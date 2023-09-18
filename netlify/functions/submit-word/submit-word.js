@@ -17,6 +17,8 @@ exports.handler = async function(event, context) {
         method: "POST",
       });
       const captchaData = await captchaResponse.json();
+      console.log("Captcha Data:", captchaData);
+
   
       if (!captchaData.success || captchaData.score <= 0.5) {
         return { statusCode: 400, body: "Captcha verification failed" };
