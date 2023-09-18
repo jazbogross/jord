@@ -1,11 +1,11 @@
 const fetch = require('node-fetch')
-import { schedule } from '@netlify/functions'
+
 
 // This is sample build hook
 const BUILD_HOOK = process.env.DEPLOY_HOOK;
 
 
-const handler = schedule('15 12 18 * *', async () => {
+exports.handler = async (event, context) => {
     await fetch(BUILD_HOOK, {
       method: 'POST'
     }).then(response => {
@@ -15,6 +15,5 @@ const handler = schedule('15 12 18 * *', async () => {
     return {
       statusCode: 200
     }
-  })
+  }
   
-  export { handler }
