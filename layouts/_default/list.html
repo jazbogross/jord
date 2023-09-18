@@ -14,20 +14,20 @@
 </div>
 
 <script>
-   document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('wordForm');
   form.addEventListener('submit', async (e) => {
     e.preventDefault(); // Prevent the default form submission
     
-    const word = document.getElementById('word').value;
-    const captchaResponse = grecaptcha.getResponse(); // Get reCAPTCHA v3 response
-    
-    const payload = {
-      word,
-      captcha: captchaResponse
-    };
-    
     try {
+      const captchaResponse = await grecaptcha.execute('6LcYAzUoAAAAAKnfXcLaFMzaqOJAkxgsKJmmRsPn', {action: 'submit'});
+      
+      const word = document.getElementById('word').value;
+      const payload = {
+        word,
+        captcha: captchaResponse
+      };
+    
       const response = await fetch('/.netlify/functions/submit-word', {
         method: 'POST',
         headers: {
@@ -44,6 +44,7 @@
     }
   });
 });
+
 
   </script>
 
