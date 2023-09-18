@@ -6,7 +6,7 @@
 </div>
 
 <div >
-    <form id="wordForm" onsubmit="handleFormSubmit(event)">
+    <form id="wordForm">
         <label for="word">Enter a word:</label>
         <input type="text" id="word" name="word" required>
         <button type="submit">Submit</button>
@@ -14,25 +14,37 @@
 </div>
 
 <script>
-    // When your form is submitted
-    function handleFormSubmit(event) {
-      event.preventDefault();
-      
-      grecaptcha.ready(function() {
-        grecaptcha.execute('6LcYAzUoAAAAAKnfXcLaFMzaqOJAkxgsKJmmRsPn', { action: 'submit' }).then(function(token) {
-          // Add the token to the form
-          var form = document.getElementById('wordForm');
-          var input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = 'g-recaptcha-response';
-          input.value = token;
-          form.appendChild(input);
-  
-          // Submit the form
-          form.submit();
-        });
+   document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('wordForm');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault(); // Prevent the default form submission
+    
+    const word = document.getElementById('word').value;
+    const captchaResponse = grecaptcha.getResponse(); // Get reCAPTCHA v3 response
+    
+    const payload = {
+      word,
+      captcha: captchaResponse
+    };
+    
+    try {
+      const response = await fetch('/.netlify/functions/submit-word', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
       });
+
+      const data = await response.json();
+      console.log('Success:', data);
+      
+    } catch (error) {
+      console.error('Error:', error);
     }
+  });
+});
+
   </script>
 
 {{ end }}

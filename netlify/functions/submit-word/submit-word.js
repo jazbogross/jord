@@ -20,6 +20,8 @@ exports.handler = async function(event, context) {
 
     if (!captchaData.success || captchaData.score <= 0.5) {
       return { statusCode: 400, body: "Captcha verification failed" };
+    } else {
+        console.log("Captcha verified");
     }
 
     // Fetch existing words from your GitHub repository
@@ -42,7 +44,7 @@ exports.handler = async function(event, context) {
       existingWord.fontSize += 1;
       existingWord.date = timestamp;
     } else {
-      words.push({ word, fontSize: 1, date: timestamp });
+      words.push({ word, fontSize: 20, date: timestamp });
     }
 
     // Convert updated words back to Base64 for GitHub
