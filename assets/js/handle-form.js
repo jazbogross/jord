@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', (event) => {
-    const formContainer = document.querySelector('#form-container');
+    const formContainer = document.getElementById('formContainer');
     const form = document.querySelector('form');
   
     form.addEventListener('submit', async function(e) {
@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     if (response.ok) {
       const data = await response.json();
       console.log('Success:', data);
+      formContainer.style.display = 'none'; // Close the form
     } else {
       // Log the text response from the server for debugging
       const text = await response.text();
@@ -42,7 +43,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
         console.error('Parse Error:', e);
       }
     }
-    formContainer.remove();
   });
   
 });
