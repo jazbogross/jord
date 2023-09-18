@@ -1,6 +1,5 @@
 const fetch = require('node-fetch');
 const nodemailer = require('nodemailer');
-const { schedule } = require('@netlify/functions')
 
 exports.handler = async (event, context) => {
   try {
@@ -26,14 +25,14 @@ exports.handler = async (event, context) => {
     const transporter = nodemailer.createTransport({
       service: 'gmail', // Replace with your email service
       auth: {
-        user: 'theatrebuilding2@gmail.com', // Replace with your email
-        pass: 'fehphgpaxakdrsyo' // Replace with your email password
+        user: process.env.EMAIL_USER, // from netlify envvironment variables
+        pass: process.env.EMAIL_PASS // from netlify envvironment variables
       }
     });
 
     // Email options
     const mailOptions = {
-      from: 'theatrebuilding2@gmail.com',
+      from: process.env.EMAIL_USER,
       to: 'jazbogross@gmail.com',
       subject: `Ord fra Jorden (${nowFormatted})`,
       text: `Hej Monia,\n\nFolk har lagt mærke til de her ord: \n\n${wordsOnly}\n\nHav en dejlig dag,\nJorden`

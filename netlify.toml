@@ -6,5 +6,9 @@
 [build.environment]
   HUGO_VERSION = "0.112.5"
 
-[functions."send-email"]
-  schedule = "0 20 * * *"
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+  [functions.send-email]
+    schedule = "0 20 * * *"
