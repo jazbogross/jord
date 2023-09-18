@@ -13,15 +13,20 @@ exports.handler = async function(event, context) {
     // CAPTCHA Verification
     let captchaResponse;
     try {
-      captchaResponse = await fetch(`https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captcha}`, {
-        method: "POST",
-      });
+        captchaResponse = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
+            method: "POST",
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `secret=${secretKey}&response=${captcha}`
+          });
+          
       const captchaData = await captchaResponse.json();
       console.log("Captcha Data:", captchaData);
 
   
       if (!captchaData.success || captchaData.score <= 0.5) {
-        return { statusCode: 400, body: "Captcha verification failed" };
+        return { statusCode: 400, body: JSON.stringify({ message: "Captcha verification failed" }) };
       }
     } catch (captchaError) {
       console.error("Captcha Error:", captchaError);
