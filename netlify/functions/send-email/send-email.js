@@ -1,5 +1,6 @@
 const fetch = require('node-fetch');
 const nodemailer = require('nodemailer');
+const { schedule } = require('@netlify/functions')
 
 exports.handler = async (event, context) => {
   try {
