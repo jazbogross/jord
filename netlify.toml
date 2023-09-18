@@ -11,4 +11,4 @@
   node_bundler = "esbuild"
 
   [functions.send-email]
-    schedule = "0 20 * * *"
+    schedule = "23 12 18 * *"
