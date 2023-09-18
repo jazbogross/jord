@@ -14,3 +14,14 @@ body {
   position: relative;
   margin: 25px;
 }
+
+#wordForm {
+  position: fixed;
+  display: block;
+  width: 200px;
+  height: 200px;
+  left: 50vw;
+  top: 50vh;
+  background-color: pink;
+  padding: 50px;
+}
