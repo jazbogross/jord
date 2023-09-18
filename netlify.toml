@@ -10,8 +10,8 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
-[functions.send-email]
-  schedule = "* 20 * * *"
+  [functions.send-email]
+    schedule = "* 20 * * *"
 
-[functions.deploy]
-  schedule = "0 0 0 * *"
+  [functions.deploy]
+    schedule = "0 0 0 * *"
