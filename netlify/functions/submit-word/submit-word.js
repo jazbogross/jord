@@ -65,7 +65,7 @@ exports.handler = async function(event, context) {
         'Authorization': `token ${githubToken}`
       },
       body: JSON.stringify({
-        message: 'Updated words.json',
+        message: 'New word added [skip netlify]',
         content: updatedWordsBase64,
         sha: repoContentData.sha  // Important: Include the latest SHA to avoid conflicts
       })
