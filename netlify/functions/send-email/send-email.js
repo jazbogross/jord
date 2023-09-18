@@ -11,22 +11,29 @@ exports.handler = async (event, context) => {
     const now = new Date();
     const nowFormatted = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-
     // Filter out words that were not submitted in the last 24 hours
     const filteredData = data.filter(item => {
       const itemDate = new Date(item.date);
       return (now - itemDate) < 86400000; // Less than 24 hours (in milliseconds)
     });
 
-    // Extract only the 'word' values and join them with new lines
-    const wordsOnly = filteredData.map(item => item.word).join('\n');
+    let subject, text;
+
+    if (filteredData.length > 0) {
+      const wordsOnly = filteredData.map(item => item.word).join('\n');
+      subject = `Ord fra Haven (${nowFormatted})`;
+      text = `Hej Monia,\n\nIdag er der blevet høstet følgende ord: \n\n${wordsOnly}\n\nHav en dejlig aften,\nHaven`;
+    } else {
+      subject = `Ingen Nye Ord fra Haven (${nowFormatted})`;
+      text = `Hej Monia,\n\nIdag er der ikke blevet høstet nogen ord.\n\nHav en dejlig aften,\nHaven`;
+    }
 
     // Create a Nodemailer transporter
     const transporter = nodemailer.createTransport({
-      service: 'gmail', // Replace with your email service
+      service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER, // from netlify envvironment variables
-        pass: process.env.EMAIL_PASS // from netlify envvironment variables
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
       }
     });
 
@@ -34,8 +41,8 @@ exports.handler = async (event, context) => {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: 'jazbogross@gmail.com',
-      subject: `Ord fra Jorden (${nowFormatted})`,
-      text: `Hej Monia,\n\nFolk har lagt mærke til de her ord: \n\n${wordsOnly}\n\nHav en dejlig dag,\nJorden`
+      subject,
+      text
     };
 
     // Send the email
