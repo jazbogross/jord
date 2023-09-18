@@ -8,29 +8,30 @@ exports.handler = async function(event, context) {
     const body = JSON.parse(event.body);
     const word = body.word;
     const captcha = body['g-recaptcha-response'];
-
-    // GitHub Personal Access Token from Netlify environment variables
     const githubToken = process.env.GITHUB_TOKEN;
 
-    // Verify captcha (use your reCAPTCHA v3 secret key)
-    const captchaResponse = await fetch(`https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captcha}`, {
-      method: "POST",
-    });
-    const captchaData = await captchaResponse.json();
-
-    if (!captchaData.success || captchaData.score <= 0.5) {
-      return { statusCode: 400, body: "Captcha verification failed" };
-    } else {
-        console.log("Captcha verified");
+    // CAPTCHA Verification
+    let captchaResponse;
+    try {
+      captchaResponse = await fetch(`https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captcha}`, {
+        method: "POST",
+      });
+      const captchaData = await captchaResponse.json();
+  
+      if (!captchaData.success || captchaData.score <= 0.5) {
+        return { statusCode: 400, body: "Captcha verification failed" };
+      }
+    } catch (captchaError) {
+      console.error("Captcha Error:", captchaError);
+      return { statusCode: 400, body: "Captcha verification encountered an error" };
     }
 
-    // Fetch existing words from your GitHub repository
+    // Fetch existing words
     const repoContentResponse = await fetch(jsonURL, {
       headers: {
         'Authorization': `token ${githubToken}`
       }
     });
-
     const repoContentData = await repoContentResponse.json();
     const existingWordsBase64 = repoContentData.content;
     const existingWordsStr = base64.decode(existingWordsBase64);
@@ -64,14 +65,15 @@ exports.handler = async function(event, context) {
     });
 
     return {
-      statusCode: 200,
-      body: JSON.stringify({ message: 'Word successfully added or updated' })
-    };
-  } catch (error) {
-    console.error('Error:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ message: 'An error occurred' })
-    };
-  }
-};
+        statusCode: 200,
+        body: JSON.stringify({ message: 'Word successfully added or updated' })
+      };
+  
+    } catch (generalError) {
+      console.error('General Error:', generalError);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ message: 'An unexpected error occurred' })
+      };
+    }
+  };
