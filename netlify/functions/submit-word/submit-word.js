@@ -2,6 +2,7 @@ const fetch = require("node-fetch");
 const fs = require("fs").promises;
 const base64 = require('base-64');
 const jsonURL = "https://api.github.com/repos/jazbogross/jord/static/words.json";
+const secretKey = process.env.CAPTCHA_SECRET_KEY;
 
 
 exports.handler = async function(event, context) {
@@ -14,10 +15,12 @@ exports.handler = async function(event, context) {
     const githubToken = process.env.GITHUB_TOKEN;
 
     // Verify captcha (use your reCAPTCHA secret key)
-    const captchaResponse = await fetch(`https://www.google.com/recaptcha/api/siteverify?secret=6Lcu0TQoAAAAANwWA9V-7QGVlhIVmvpWfoz8R4JG&response=${captcha}`, {
+    const captchaResponse = await fetch(`https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captcha}`, {
       method: "POST",
     });
     const captchaData = await captchaResponse.json();
+
+    
 
     if (!captchaData.success) {
       return { statusCode: 400, body: "Captcha verification failed" };
