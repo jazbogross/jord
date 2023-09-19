@@ -26,6 +26,7 @@ body {
   width: 100vw;
   height: 100vh;
   backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
 }
 
 #wordForm {
