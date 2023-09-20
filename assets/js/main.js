@@ -104,8 +104,6 @@ function showComments(comments, wordElement) {
   input.value = word;
   form.appendChild(inputWord);
 
-  <input type="hidden" id="custId" name="custId" value="3487"></input>
-
   const input = document.createElement('input');
   input.type = 'text';
   input.name = 'comment';
