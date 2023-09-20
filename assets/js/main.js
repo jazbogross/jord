@@ -244,7 +244,7 @@ function initCommentForm() {
         const data = await response.json();
         console.log('Success:', data);
         document.querySelector('.comment-form').innerText = 'Din kommentar er sendt til godkendelse og bliver vist imorgen';
-        document.querySelector('.comment-form').remove(); // Remove the form from the DOM
+        // document.querySelector('.comment-form').remove(); // Remove the form from the DOM
       } else {
         const text = await response.text();
         console.log('Server Response:', text);
