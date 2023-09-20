@@ -241,11 +241,11 @@ function initCommentForm() {
       if (response.ok) {
         const data = await response.json();
         console.log('Success:', data);
-        form.innerHTML = 'Din kommentar er sendt til godkendelse og bliver vist imorgen';
+        document.querySelector('.comment-form').innerHTML = 'Din kommentar er sendt til godkendelse og bliver vist imorgen';
       } else {
         const text = await response.text();
         console.log('Server Response:', text);
-        form.innerHTML = 'Der er sket en fejl. Præv igen lidt senere.';
+        document.querySelector('.comment-form').innerHTML = 'Der er sket en fejl. Præv igen senere.';
         try {
           if (text) {
             const data = JSON.parse(text);
