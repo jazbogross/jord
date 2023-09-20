@@ -245,13 +245,15 @@ function initCommentForm() {
         console.log('Success:', data);
         document.querySelector('.comment-form').innerText = 'Din kommentar er sendt til godkendelse og bliver vist imorgen';
         document.querySelector('.comment-form').style.display = 'block';
+        document.querySelector('.comment-form').style.className = 'comment';
         // document.querySelector('.comment-form').remove(); // Remove the form from the DOM
       } else {
         const text = await response.text();
         console.log('Server Response:', text);
         document.querySelector('.comment-form').innerText = 'Der er sket en fejl. Prøv igen senere.';
         document.querySelector('.comment-form').reset();
-        document.querySelector('.comment-form').style.display = 'block'; // Hide the form immediately
+        document.querySelector('.comment-form').style.display = 'block'; 
+        document.querySelector('.comment-form').style.className = 'comment'; 
         try {
           if (text) {
             const data = JSON.parse(text);
