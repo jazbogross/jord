@@ -48,9 +48,10 @@ exports.handler = async function(event, context) {
     const existingWordsStr = base64.decode(existingWordsBase64);
     let words = JSON.parse(existingWordsStr);
 
-    // Step 3: Update or Add Word
+    // Step 3: Get local time
     const now = new Date();
-    const timestamp = now.toISOString();
+    const timezoneOffsetMinutes = now.getTimezoneOffset();
+    const localTimestamp = new Date(now.getTime() - timezoneOffsetMinutes * 60000).toISOString();
 
     // Check if the word already exists in the JSON data
     const existingWord = words.find(item => item.word === word);
@@ -58,9 +59,9 @@ exports.handler = async function(event, context) {
     // If the word exists, update it; otherwise, add a new word
     if (existingWord) {
       existingWord.fontSize += 1;
-      existingWord.date = timestamp;
+      existingWord.date = localTimestamp;
     } else {
-      words.push({ word, fontSize: 20, date: timestamp });
+      words.push({ word, fontSize: 20, date: localTimestamp });
     }
 
     // Step 4: Commit Changes

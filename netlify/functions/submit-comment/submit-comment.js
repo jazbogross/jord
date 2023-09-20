@@ -49,12 +49,14 @@ exports.handler = async function(event, context) {
 
     // Step 3: Add New Comment
     const now = new Date();
-    const timestamp = now.toISOString();
+    const timezoneOffsetMinutes = now.getTimezoneOffset();
+    const localTimestamp = new Date(now.getTime() - timezoneOffsetMinutes * 60000).toISOString();
+
 
     const newCommentId = `comment${Date.now()}`; // Create a unique comment ID based on the current timestamp
     const newComment = {
       text: commentText,
-      date: timestamp
+      date: localTimestamp
     };
 
     if (!allComments[word]) {
