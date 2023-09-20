@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
       e.preventDefault();
       formContainer.style.display = 'none'; // Hide the form immediately
       wordAgain.addEventListener("click", function(){ 
-        formContainer.style.display = 'flex'; // Display again if the user clicks the button to add another word
+      formContainer.style.display = 'flex'; // Display again if the user clicks the button to add another word
       });
   
       // Execute reCAPTCHA and get the token

@@ -13,6 +13,8 @@ body {
 .word {
   position: relative;
   margin: 25px;
+  max-width: 100vw;
+  word-break: break-all;
 }
 
 #formContainer {
