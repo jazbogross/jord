@@ -3,10 +3,13 @@ const base64 = require('base-64');
 const jsonURL = "https://api.github.com/repos/jazbogross/jord/contents/static/words.json";
 const secretKey = process.env.CAPTCHA_SECRET_KEY;
 
+// ... (previous import statements and variables)
+
 exports.handler = async function(event, context) {
   try {
     // Parse the incoming request body
     const body = JSON.parse(event.body);
+    const commentText = body.comment;
     const word = body.word;
     const captcha = body['g-recaptcha-response'];
     const githubToken = process.env.GITHUB_TOKEN;
@@ -34,60 +37,54 @@ exports.handler = async function(event, context) {
       return { statusCode: 400, body: "Captcha verification encountered an error" };
     }
 
-    // Step 2: Fetch Existing Words
-    // Fetch the current state of the JSON file from GitHub
+    // Step 2: Fetch Existing Comments
     const repoContentResponse = await fetch(jsonURL, {
       headers: {
         'Authorization': `token ${githubToken}`
       }
     });
     const repoContentData = await repoContentResponse.json();
-    const existingWordsBase64 = repoContentData.content;
-    
-    // Decode the Base64 content to a string and parse it to a JSON object
-    const existingWordsStr = base64.decode(existingWordsBase64);
-    let words = JSON.parse(existingWordsStr);
+    const existingCommentsBase64 = repoContentData.content;
 
-    // Step 3: Update or Add Word
+    const existingCommentsStr = base64.decode(existingCommentsBase64);
+    let allComments = JSON.parse(existingCommentsStr);
+
+    // Step 3: Add New Comment
     const now = new Date();
     const timestamp = now.toISOString();
 
-    // Check if the word already exists in the JSON data
-    const existingWord = words.find(item => item.word === word);
+    const newCommentId = `comment${Date.now()}`; // Create a unique comment ID based on the current timestamp
+    const newComment = {
+      text: commentText,
+      date: timestamp
+    };
 
-    // If the word exists, update it; otherwise, add a new word
-    if (existingWord) {
-      existingWord.fontSize += 1;
-      existingWord.date = timestamp;
-    } else {
-      words.push({ word, fontSize: 20, date: timestamp });
+    if (!allComments[word]) {
+      allComments[word] = {};
     }
+    allComments[word][newCommentId] = newComment;
 
     // Step 4: Commit Changes
-    // Encode the updated JSON data back to Base64
-    const updatedWordsBase64 = base64.encode(JSON.stringify(words));
+    const updatedCommentsBase64 = base64.encode(JSON.stringify(allComments));
 
-    // Update the GitHub repository with the new content
     await fetch(jsonURL, {
       method: 'PUT',
       headers: {
         'Authorization': `token ${githubToken}`
       },
       body: JSON.stringify({
-        message: 'New word added [skip netlify]',
-        content: updatedWordsBase64,
-        sha: repoContentData.sha  // Important: Include the latest SHA to avoid conflicts
+        message: 'New comment added [skip netlify]',
+        content: updatedCommentsBase64,
+        sha: repoContentData.sha
       })
     });
 
-    // Return a success response
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: 'Word successfully added or updated' })
+      body: JSON.stringify({ message: 'Comment successfully added' })
     };
   
   } catch (generalError) {
-    // Handle any unexpected errors
     console.error('General Error:', generalError);
     return {
       statusCode: 500,
@@ -95,3 +92,4 @@ exports.handler = async function(event, context) {
     };
   }
 };
+

@@ -1,0 +1,37 @@
+{
+    "Guldknap": {
+      "comment00001": {
+        "text": "Hvad er det?",
+        "date": "2023-09-20T12:34:56Z"
+      },
+      "comment00002": {
+        "text": "Det er en blomst",
+        "date": "2023-09-19T14:12:33Z"
+      },
+      "comment00003": {
+        "text": "Kan man lave te af den?",
+        "date": "2023-09-22T08:09:15Z"
+      }
+    },
+    "Urt": {
+      "comment00001": {
+        "text": "God til te.",
+        "date": "2023-09-19T18:20:45Z"
+      },
+      "comment00002": {
+        "text": "Urter har mange medicinske fordele.",
+        "date": "2023-09-20T16:17:29Z"
+      }
+    },
+    "Rod": {
+      "comment00001": {
+        "text": "ellers kan planter jo ikke vokse",
+        "date": "2023-09-21T09:46:01Z"
+      },
+      "comment00002": {
+        "text": "Betyder jo også noget inde for lingvistikken",
+        "date": "2023-09-22T10:35:14Z"
+      }
+    }
+  }
+  

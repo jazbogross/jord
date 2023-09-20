@@ -15,8 +15,5 @@
   
     <script src="https://www.google.com/recaptcha/api.js?render=6LcYAzUoAAAAAKnfXcLaFMzaqOJAkxgsKJmmRsPn"></script>
 
-    {{ $javascript := resources.Get "js/handle-form.js" | resources.Minify }}
-    <script src="{{- $javascript.Permalink -}}"></script>
-
 
 {{ end }}
