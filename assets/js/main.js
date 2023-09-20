@@ -238,14 +238,19 @@ function initCommentForm() {
         body: JSON.stringify(payload),
       });
 
+      document.querySelector('.comment-form').style.display = 'none'; // Hide the form immediately
+
       if (response.ok) {
         const data = await response.json();
         console.log('Success:', data);
-        document.querySelector('.comment-form').innerHTML = 'Din kommentar er sendt til godkendelse og bliver vist imorgen';
+        document.querySelector('.comment-form').innerText = 'Din kommentar er sendt til godkendelse og bliver vist imorgen';
+        document.querySelector('.comment-form').remove(); // Remove the form from the DOM
       } else {
         const text = await response.text();
         console.log('Server Response:', text);
-        document.querySelector('.comment-form').innerHTML = 'Der er sket en fejl. Præv igen senere.';
+        document.querySelector('.comment-form').innerText = 'Der er sket en fejl. Prøv igen senere.';
+        document.querySelector('.comment-form').reset();
+        document.querySelector('.comment-form').style.display = 'block'; // Hide the form immediately
         try {
           if (text) {
             const data = JSON.parse(text);
