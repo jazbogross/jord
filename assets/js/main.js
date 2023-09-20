@@ -98,9 +98,17 @@ function showComments(comments, wordElement) {
   form.className = 'comment-form';
   wordElement.appendChild(form);
 
+  const inputWord = document.createElement('input');
+  input.type = 'hidden';
+  input.name = 'commentWord';
+  input.value = word;
+  form.appendChild(inputWord);
+
+  <input type="hidden" id="custId" name="custId" value="3487"></input>
+
   const input = document.createElement('input');
   input.type = 'text';
-  input.name = 'text';
+  input.name = 'comment';
   input.placeholder = 'Skriv din kommentar...';
   form.appendChild(input);
   
@@ -209,7 +217,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 // COMMENT FORM LOGIC ////////////////////////////////////////////////////////////////////
 function initCommentForm() {
-  const commentForm = document.querySelector('.comment-form'); // Replace with your comment form selector
+  const commentForm = document.querySelector('.comment-form');
 
   if (commentForm) {
     commentForm.addEventListener('submit', async function (e) {
@@ -219,7 +227,8 @@ function initCommentForm() {
 
       const formData = new FormData(commentForm);
       const payload = {
-        comment: formData.get('text'), // Assumes your comment input has a name 'text'
+        commentWord: formData.get('commentWord'), // Assumes your comment input has a name 'commentWord'
+        comment: formData.get('comment'), // Assumes your comment input has a name 'text'
         'g-recaptcha-response': recaptchaToken
       };
 
