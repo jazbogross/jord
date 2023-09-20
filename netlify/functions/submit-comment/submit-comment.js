@@ -7,10 +7,8 @@ exports.handler = async function(event, context) {
   try {
     // Parse the incoming request body
     const body = JSON.parse(event.body);
-    console.log('Parsed body:', body);
     const commentText = body.comment;
     const word = body.commentWord;
-    console.log('Parsed word:', word);
     const captcha = body['g-recaptcha-response'];
     const githubToken = process.env.GITHUB_TOKEN;
 
