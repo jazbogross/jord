@@ -99,9 +99,9 @@ function showComments(comments, wordElement) {
   wordElement.appendChild(form);
 
   const inputWord = document.createElement('input');
-  input.type = 'hidden';
-  input.name = 'commentWord';
-  input.value = word;
+  inputWord.type = 'hidden';
+  inputWord.name = 'commentWord';
+  inputWord.value = word;
   form.appendChild(inputWord);
 
   const input = document.createElement('input');
