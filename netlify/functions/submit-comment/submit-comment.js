@@ -1,9 +1,7 @@
 const fetch = require("node-fetch");
 const base64 = require('base-64');
-const jsonURL = "https://api.github.com/repos/jazbogross/jord/contents/static/words.json";
+const jsonURL = "https://api.github.com/repos/jazbogross/jord/contents/static/comments.json";
 const secretKey = process.env.CAPTCHA_SECRET_KEY;
-
-// ... (previous import statements and variables)
 
 exports.handler = async function(event, context) {
   try {
