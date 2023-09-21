@@ -169,15 +169,22 @@ document.addEventListener('DOMContentLoaded', (event) => {
     e.preventDefault();
     formContainer.style.display = 'none'; // Hide the form immediately
     wordAgain.addEventListener("click", function(){ 
-    formContainer.style.display = 'flex'; // Display again if the user clicks the button to add another word
+      formContainer.style.display = 'flex'; // Display again if the user clicks the button to add another word
     });
+
+    // Get the word from form data
+    const formData = new FormData(form);
+    const originalWord = formData.get('word');
+
+    // UTF-8 encode the word
+    const encoder = new TextEncoder();
+    const encodedWord = encoder.encode(originalWord);
 
     // Execute reCAPTCHA and get the token
     const recaptchaToken = await grecaptcha.execute('6LcYAzUoAAAAAKnfXcLaFMzaqOJAkxgsKJmmRsPn', { action: 'submit' });
 
-    const formData = new FormData(form);
     const payload = {
-      word: formData.get('word'),
+      word: encodedWord, // Use the UTF-8 encoded word
       'g-recaptcha-response': recaptchaToken // Include the reCAPTCHA token
     };
 
@@ -189,29 +196,29 @@ document.addEventListener('DOMContentLoaded', (event) => {
       body: JSON.stringify(payload),
     });
 
-  // Check if the response is okay (status code in the range 200-299)
-  if (response.ok) {
-    const data = await response.json();
-    console.log('Success:', data);
-  } else {
-    // Log the text response from the server for debugging
-    const text = await response.text();
-    console.log('Server Response:', text);
+    // Check if the response is okay (status code in the range 200-299)
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Success:', data);
+    } else {
+      // Log the text response from the server for debugging
+      const text = await response.text();
+      console.log('Server Response:', text);
 
-    try {
-      // Try parsing the server response into JSON
-      if (text) {
-        const data = JSON.parse(text);
-        console.log('Parsed Error:', data);
+      try {
+        // Try parsing the server response into JSON
+        if (text) {
+          const data = JSON.parse(text);
+          console.log('Parsed Error:', data);
+        }
+      } catch (e) {
+        // Log any parsing errors
+        console.error('Parse Error:', e);
       }
-    } catch (e) {
-      // Log any parsing errors
-      console.error('Parse Error:', e);
     }
-  }
+  });
 });
 
-});
 
 // COMMENT FORM LOGIC ////////////////////////////////////////////////////////////////////
 function initCommentForm() {
