@@ -7,6 +7,7 @@ exports.handler = async function(event, context) {
   try {
     // Parse the incoming request body
     const body = JSON.parse(event.body);
+    console.log(body);
     const wordBuffer = Buffer.from(body.word);
     const word = wordBuffer.toString('utf-8');
     const captcha = body['g-recaptcha-response'];

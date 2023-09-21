@@ -1,4 +1,5 @@
 let container = document.getElementById('word-container');
+const wordAgain = document.getElementById('wordAgain');
 let allWords = [];
 let activeSpanElement = null; // Variable to store the active span
 let activeCommentsDiv = null; // Variable to store the active comments div
@@ -162,7 +163,6 @@ container.addEventListener('scroll', () => {
 // WORD FORM LOGIC
 document.addEventListener('DOMContentLoaded', (event) => {
   const formContainer = document.getElementById('formContainer');
-  const wordAgain = document.getElementById('wordAgain');
   const form = document.querySelector('form');
 
   form.addEventListener('submit', async function(e) {
@@ -171,12 +171,15 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     // Get the word from form data and make it lowercase
     const formData = new FormData(form);
+    console.log('formData:',formData);
     const originalWord = formData.get('word');
-    const word = originalWord.toLowerCase();
+    console.log('originalWord:',originalWord);
+    const lowercaseWord = originalWord.toLowerCase();
+    console.log(lowercaseWord);
 
     // UTF-8 encode the word
     const encoder = new TextEncoder();
-    const encodedWord = encoder.encode(word);
+    const encodedWord = encoder.encode(lowercaseWord);
     console.log(encodedWord);
 
     // Execute reCAPTCHA and get the token
@@ -186,6 +189,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
       word: encodedWord, // Use the UTF-8 encoded word
       'g-recaptcha-response': recaptchaToken // Include the reCAPTCHA token
     };
+
+    console.log("Sending payload:", JSON.stringify(payload));
+
 
     const response = await fetch('https://soft-crostata-20d468.netlify.app/.netlify/functions/submit-word', {
       method: 'POST',
