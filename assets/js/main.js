@@ -12,6 +12,10 @@ fetch('words.json')
   })
   .catch(error => console.log('There was an error:', error));
 
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 function populateContainer(data, container) {
   if (data && Array.isArray(data)) {
     data.forEach(item => {
@@ -19,13 +23,14 @@ function populateContainer(data, container) {
       let randY = Math.floor(Math.random() * 100) + 10;
       let wordElement = document.createElement('div');
       let spanElement = document.createElement('span');
+      let capitalizedWord = capitalizeFirstLetter(item.word);
       wordElement.appendChild(spanElement);
       wordElement.className = 'word';
       wordElement.style.position = 'relative';
       wordElement.style.paddingLeft = randX + 'px';
       wordElement.style.paddingTop = randY + 'px';
       wordElement.style.fontSize = `${item.fontSize}px`;
-      spanElement.innerText = item.word;
+      spanElement.innerText = capitalizedWord;
       spanElement.addEventListener('click', function() {
         // Remove any previous active span's background and comments
         if (activeSpanElement) {
