@@ -1,5 +1,4 @@
 const fetch = require("node-fetch");
-const base64 = require('base-64');
 const jsonURL = "https://api.github.com/repos/jazbogross/jord/contents/static/comments.json";
 const secretKey = process.env.CAPTCHA_SECRET_KEY;
 
@@ -44,7 +43,7 @@ exports.handler = async function(event, context) {
     const repoContentData = await repoContentResponse.json();
     const existingCommentsBase64 = repoContentData.content;
 
-    const existingCommentsStr = base64.decode(existingCommentsBase64);
+    const existingCommentsStr = Buffer.from(existingCommentsBase64, 'base64').toString('utf-8');  // Updated this line
     let allComments = JSON.parse(existingCommentsStr);
 
     // Step 3: Add New Comment
@@ -65,7 +64,7 @@ exports.handler = async function(event, context) {
     allComments[word][newCommentId] = newComment;
 
     // Step 4: Commit Changes
-    const updatedCommentsBase64 = base64.encode(JSON.stringify(allComments));
+    const updatedCommentsBase64 = Buffer.from(JSON.stringify(allComments), 'utf-8').toString('base64');  // Updated this line
 
     await fetch(jsonURL, {
       method: 'PUT',
@@ -83,7 +82,7 @@ exports.handler = async function(event, context) {
       statusCode: 200,
       body: JSON.stringify({ message: 'Comment successfully added' })
     };
-  
+
   } catch (generalError) {
     console.error('General Error:', generalError);
     return {
