@@ -3,9 +3,13 @@ const nodemailer = require('nodemailer');
 
 exports.handler = async (event, context) => {
   try {
-    // Fetch JSON data from URL
+    // Fetch JSON data from WORDS
     const response = await fetch('https://soft-crostata-20d468.netlify.app/words.json');
     const data = await response.json();
+
+    // Fetch JSON data from COMMENTS
+    const commentsResponse = await fetch('https://soft-crostata-20d468.netlify.app/comments.json');
+    const commentsData = await response.json();
 
     // Get the current date and time
     const now = new Date();
@@ -17,16 +21,44 @@ exports.handler = async (event, context) => {
       return (now - itemDate) < 86400000; // Less than 24 hours (in milliseconds)
     });
 
+    // Filter comments based on last 24 hours
+    let recentComments = {};
+    for (let word in commentsData) {
+      for (let commentId in commentsData[word]) {
+        let commentDate = new Date(commentsData[word][commentId].date);
+        if ((now - commentDate) < 86400000) {
+          if (!recentComments[word]) recentComments[word] = [];
+          recentComments[word].push(commentsData[word][commentId].text);
+        }
+      }
+    }
+
     let subject, text;
 
     if (filteredData.length > 0) {
       const wordsOnly = filteredData.map(item => item.word).join('\n');
       subject = `Ord fra Haven (${nowFormatted})`;
-      text = `Hej Monia,\n\nIdag er der blevet høstet følgende ord: \n\n${wordsOnly}\n\nHav en dejlig aften,\nHaven`;
+      text = `Hej Monia,\n\nIdag er der blevet høstet følgende ord: \n\n${wordsOnly}`;
     } else {
       subject = `Ingen Nye Ord fra Haven (${nowFormatted})`;
-      text = `Hej Monia,\n\nIdag er der ikke blevet høstet nogen ord.\n\nHav en dejlig aften,\nHaven`;
+      text = `Hej Monia,\n\nIdag er der ikke blevet høstet nogen ord.`;
     }
+
+    // Add recent comments to the email text
+    if (recentComments.length > 0) {
+      text += '\n\nFølgende kommentarer er lavet idag:';
+      for (let word in recentComments) {
+        text += `\n\n${word}:`;
+          recentComments[word].forEach(comment => {
+            text += `\n  - ${comment}`;
+          });
+        }
+    } else {
+      text += '\n\nOg der er ikke blevet kommenteret idag.';
+      }
+
+    text += '\n\nHav en dejlig aften,\nHaven';
+
 
     // Create a Nodemailer transporter
     const transporter = nodemailer.createTransport({
@@ -40,7 +72,7 @@ exports.handler = async (event, context) => {
     // Email options
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: 'jazbogross@gmail.com',
+      to: process.env.EMAIL_TO,
       subject,
       text
     };

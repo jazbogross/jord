@@ -1,10 +1,15 @@
-let container = document.getElementById('word-container');
+const container = document.getElementById('word-container');
 const wordAgain = document.getElementById('wordAgain');
+const cancelBtn = document.getElementById('cancel');
 let allWords = [];
 let activeSpanElement = null; // Variable to store the active span
 let activeCommentsDiv = null; // Variable to store the active comments div
 let browserLanguage = getBrowserLanguage();
 let isDanish = true;
+
+cancelBtn.addEventListener("click", function(){
+  formContainer.style.display = 'none'; // Hide the form if the user clicks the button to cancel
+}) 
 
 wordAgain.addEventListener("click", function(){ 
   formContainer.style.display = 'flex'; // Display again if the user clicks the button to add another word
@@ -14,6 +19,7 @@ if (browserLanguage.includes('da')) {
   isDanish = true;
 } else {
   isDanish = false;
+  wordAgain.innerText = "Add another word from the garden";
 }
 
 fetch('words.json')
@@ -197,16 +203,16 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     // Get the word from form data and make it lowercase
     const formData = new FormData(form);
-    console.log('formData:',formData);
+   // console.log('formData:',formData);
     const originalWord = formData.get('word');
-    console.log('originalWord:',originalWord);
+   // console.log('originalWord:',originalWord);
     const lowercaseWord = originalWord.toLowerCase();
-    console.log(lowercaseWord);
+   // console.log(lowercaseWord);
 
     // UTF-8 encode the word
     const encoder = new TextEncoder();
     const encodedWord = encoder.encode(lowercaseWord);
-    console.log(encodedWord);
+   // console.log(encodedWord);
 
     // Execute reCAPTCHA and get the token
     const recaptchaToken = await grecaptcha.execute('6LcYAzUoAAAAAKnfXcLaFMzaqOJAkxgsKJmmRsPn', { action: 'submit' });
@@ -216,7 +222,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
       'g-recaptcha-response': recaptchaToken // Include the reCAPTCHA token
     };
 
-    console.log("Sending payload:", JSON.stringify(payload));
+   // console.log("Sending payload:", JSON.stringify(payload));
 
 
     const response = await fetch('https://soft-crostata-20d468.netlify.app/.netlify/functions/submit-word', {
@@ -231,10 +237,12 @@ document.addEventListener('DOMContentLoaded', (event) => {
     if (response.ok) {
       const data = await response.json();
       console.log('Success:', data);
+     // form.reset();
     } else {
       // Log the text response from the server for debugging
       const text = await response.text();
       console.log('Server Response:', text);
+    //  form.reset();
 
       try {
         // Try parsing the server response into JSON
@@ -289,17 +297,19 @@ function initCommentForm() {
         document.querySelector('.comment-form').style.display = 'block'; 
         document.querySelector('.comment-form').style.fontSize = '12px';
         document.querySelector('.comment-form').style.fontStyle = 'italic';
+        document.querySelector('.comment-form').style.width = '100px';
       } else {
         const text = await response.text();
         console.log('Server Response:', text);
         if (isDanish == true) {
-          document.querySelector('.comment-form').innerText = 'Der er sket en fejl. Prøv igen senere.';
+          document.querySelector('.comment-form').innerText = 'Der er sket en fejl.<br>Prøv igen senere.';
         } else {
-          document.querySelector('.comment-form').innerText = 'An error has ocurred. Try again later.';
+          document.querySelector('.comment-form').innerText = 'An error has ocurred.<br>Try again later.';
         }
         document.querySelector('.comment-form').style.display = 'block'; 
         document.querySelector('.comment-form').style.fontSize = '12px';
         document.querySelector('.comment-form').style.fontStyle = 'italic';
+        document.querySelector('.comment-form').style.width = '100px';
         try {
           if (text) {
             const data = JSON.parse(text);
