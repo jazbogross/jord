@@ -41,39 +41,40 @@ exports.handler = async function(event, context) {
       return { statusCode: 400, body: "Captcha verification encountered an error" };
     }
 
-    // Step 2: Fetch Existing Words
-    // Fetch the current state of the JSON file from GitHub
-    const repoContentResponse = await fetch(jsonURL, {
-      headers: {
-        'Authorization': `token ${githubToken}`
-      }
-    });
-    const repoContentData = await repoContentResponse.json();
-    const existingWordsBase64 = repoContentData.content;
-    
-    // Decode the Base64 content to a string and parse it to a JSON object
-    const existingWordsStr = base64.decode(existingWordsBase64);
-    let words = JSON.parse(existingWordsStr);
+   // Step 2: Fetch Existing Words
+// Fetch the current state of the JSON file from GitHub
+const repoContentResponse = await fetch(jsonURL, {
+  headers: {
+    'Authorization': `token ${githubToken}`
+  }
+});
+const repoContentData = await repoContentResponse.json();
+const existingWordsBase64 = repoContentData.content;
 
-    // Step 3: Get local time
-    const now = new Date();
-    const timezoneOffsetMinutes = now.getTimezoneOffset();
-    const localTimestamp = new Date(now.getTime() - timezoneOffsetMinutes * 60000).toISOString();
+// Decode the Base64 content to a string and parse it to a JSON object
+const existingWordsStr = Buffer.from(existingWordsBase64, 'base64').toString('utf-8'); // Updated this line
+let words = JSON.parse(existingWordsStr);
 
-    // Check if the word already exists in the JSON data
-    const existingWord = words.find(item => item.word === word);
+// Step 3: Get local time
+const now = new Date();
+const timezoneOffsetMinutes = now.getTimezoneOffset();
+const localTimestamp = new Date(now.getTime() - timezoneOffsetMinutes * 60000).toISOString();
 
-    // If the word exists, update it; otherwise, add a new word
-    if (existingWord) {
-      existingWord.fontSize += 1;
-      existingWord.date = localTimestamp;
-    } else {
-      words.push({ word, fontSize: 20, date: localTimestamp });
-    }
+// Check if the word already exists in the JSON data
+const existingWord = words.find(item => item.word === word);
 
-    // Step 4: Commit Changes
-    // Encode the updated JSON data back to Base64
-    const updatedWordsBase64 = base64.encode(JSON.stringify(words));
+// If the word exists, update it; otherwise, add a new word
+if (existingWord) {
+  existingWord.fontSize += 1;
+  existingWord.date = localTimestamp;
+} else {
+  words.push({ word, fontSize: 20, date: localTimestamp });
+}
+
+// Step 4: Commit Changes
+// Encode the updated JSON data back to Base64
+const updatedWordsBase64 = Buffer.from(JSON.stringify(words), 'utf-8').toString('base64'); // Updated this line
+
 
     // Update the GitHub repository with the new content
     await fetch(jsonURL, {
