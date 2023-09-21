@@ -1,6 +1,7 @@
 const container = document.getElementById('word-container');
 const wordAgain = document.getElementById('wordAgain');
 const cancelBtn = document.getElementById('cancel');
+const sendAWord = document.getElementById('sendAWord');
 let allWords = [];
 let activeSpanElement = null; // Variable to store the active span
 let activeCommentsDiv = null; // Variable to store the active comments div
@@ -10,11 +11,14 @@ let isDanish = true;
 cancelBtn.addEventListener("click", function(){
   formContainer.style.display = 'none'; // Hide the form if the user clicks the button to cancel
   wordAgain.style.zIndex = "999";
+  document.getElementById('wordForm').reset();
+
 }) 
 
 wordAgain.addEventListener("click", function(){ 
   formContainer.style.display = 'flex'; // Display again if the user clicks the button to add another word
   wordAgain.style.zIndex = "unset";
+   document.getElementById('wordForm').reset();
 });
 
 if (browserLanguage.includes('da')) {
@@ -22,6 +26,8 @@ if (browserLanguage.includes('da')) {
 } else {
   isDanish = false;
   wordAgain.innerText = "Add another word from the garden";
+  cancelBtn.innerText = "Cancel";
+  sendAWord.innerText = "Send a word from the garden";
 }
 
 fetch('words.json')
@@ -184,6 +190,71 @@ function showComments(comments, wordElement) {
   appendNextComment();
 }
 
+async function flyElementAround(element) {
+
+  // Get the initial position of the element
+  const rect = element.getBoundingClientRect();
+  const initialX = rect.left;
+  const initialY = rect.top;
+
+  // Set the initial position
+  element.style.position = 'fixed';
+  element.style.left = `${initialX}px`;
+  element.style.top = `${initialY}px`;
+
+    // Create the message div
+    const messageDiv = document.createElement('div');
+    if (isDanish == true) {
+      messageDiv.textContent = 'Dit ord er sendt til godkendelse';
+      } else {
+        messageDiv.textContent = "Your word has been sent for approval";
+      }
+    messageDiv.style.fontSize = "12px";
+    messageDiv.style.color = "green";
+    messageDiv.style.bottom = '-25px'; // 20 pixels below the element
+   // messageDiv.style.left = '0';
+    messageDiv.style.opacity = '0'; // Start with opacity 0, so we can fade it in
+  
+    // Append the message to the same div as newFly
+    element.appendChild(messageDiv);
+
+  // Create a recursive function for animation
+  function animateElement() {
+    // Generate random coordinates
+    const x = Math.random() * window.innerWidth / 4;
+    const y = Math.random() * window.innerHeight / 4;
+
+ // Bezier curve for smooth motion
+    // Format: cubic-bezier(P1x, P1y, P2x, P2y)
+    const bezierCurve = 'cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+
+    // Animate the element to the new coordinates
+    element.style.transition = `all 1s ${bezierCurve}`;
+    element.style.left = `${x}px`;
+    element.style.top = `${y}px`;
+
+    // Call the function recursively to keep the element moving
+    setTimeout(animateElement, 5000)
+    
+  }
+
+  // Kick off the animation
+  animateElement();
+
+    // Display the message after 5 seconds
+  setTimeout(() => {
+    messageDiv.style.transition = 'opacity 0.5s ease';
+    messageDiv.style.opacity = '1';
+  }, 1000);
+
+
+  // Set up removal after 10 seconds
+  setTimeout(() => {
+    element.style.left = '2000px';
+    setTimeout(() => element.remove(), 500);
+  }, 5000);
+}
+
 // Event listener for scroll
 container.addEventListener('scroll', () => {
   const { scrollTop, scrollHeight, clientHeight } = container;
@@ -201,7 +272,38 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
   form.addEventListener('submit', async function(e) {
     e.preventDefault();
+    const flyWord = document.getElementById('word');
+    
+    // Get the position and dimensions of the original word
+    const rect = flyWord.getBoundingClientRect();
+
+    // Create a new div that is a copy of the original word
+    const newFly = document.createElement('div');
+    newFly.id = 'flyWord';
+    newFly.textContent = flyWord.value; // Or another way to copy the word
+
+        // Copy all computed styles to the new element
+        const computedStyle = window.getComputedStyle(flyWord);
+        for (let i = 0; i < computedStyle.length; i++) {
+          const key = computedStyle[i];
+          const value = computedStyle.getPropertyValue(key);
+          newFly.style[key] = value;
+        }
+
+    // Position the new div to exactly overlap the original word
+    newFly.style.position = 'fixed';
+    newFly.style.left = `${rect.left}px`;
+    newFly.style.top = `${rect.top}px`;
+    newFly.style.width = `${rect.width}px`;
+    newFly.style.height = `${rect.height}px`;
+    newFly.style.border = 'none';
+    newFly.style.zIndex = "999";
+
+    // Add the new div to the body
+    document.body.appendChild(newFly);
     formContainer.style.display = 'none'; // Hide the form immediately
+    flyElementAround(newFly);
+    wordAgain.style.zIndex = "999"; 
 
     // Get the word from form data and make it lowercase
     const formData = new FormData(form);
@@ -214,7 +316,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     // UTF-8 encode the word
     const encoder = new TextEncoder();
     const encodedWord = encoder.encode(lowercaseWord);
-   // console.log(encodedWord);
 
     // Execute reCAPTCHA and get the token
     const recaptchaToken = await grecaptcha.execute('6LcYAzUoAAAAAKnfXcLaFMzaqOJAkxgsKJmmRsPn', { action: 'submit' });
@@ -223,9 +324,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
       word: encodedWord, // Use the UTF-8 encoded word
       'g-recaptcha-response': recaptchaToken // Include the reCAPTCHA token
     };
-
-   // console.log("Sending payload:", JSON.stringify(payload));
-
 
     const response = await fetch('https://soft-crostata-20d468.netlify.app/.netlify/functions/submit-word', {
       method: 'POST',
@@ -274,8 +372,8 @@ function initCommentForm() {
 
       const formData = new FormData(commentForm);
       const payload = {
-        commentWord: formData.get('commentWord'), // Assumes your comment input has a name 'commentWord'
-        comment: formData.get('comment'), // Assumes your comment input has a name 'text'
+        commentWord: formData.get('commentWord'), // Assumes comment input has a name 'commentWord'
+        comment: formData.get('comment'), // Assumes comment input has a name 'text'
         'g-recaptcha-response': recaptchaToken
       };
 
