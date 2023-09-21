@@ -6,15 +6,15 @@ let activeCommentsDiv = null; // Variable to store the active comments div
 let browserLanguage = getBrowserLanguage();
 let isDanish = true;
 
+wordAgain.addEventListener("click", function(){ 
+  formContainer.style.display = 'flex'; // Display again if the user clicks the button to add another word
+});
+
 if (browserLanguage.includes('da')) {
   isDanish = true;
 } else {
   isDanish = false;
 }
-
-console.log(browserLanguage);
-console.log(isDanish);
-
 
 fetch('words.json')
   .then(response => response.json())
@@ -28,7 +28,6 @@ function getBrowserLanguage() {
   const lang = navigator.language || navigator.userLanguage; // For older versions of IE
   return lang;
 }
-  
 
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -276,28 +275,20 @@ function initCommentForm() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
-      });
-
-      
-
-      // FIX ALL THIS MESSY FEEDBACK - Write a seperate function with the correct styling, etc. and call it wherever needed. /////////////////////////////////////////////////////////////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////////////////////
-
-      
+      });      
 
       if (response.ok) {
         const data = await response.json();
         console.log('Success:', data);
-        // remove the comment form and display a success message which is styled differently font size
+        // remove the comment form and display a success message
         if (isDanish == true) {
           document.querySelector('.comment-form').innerText = 'Din kommentar er blevet sendt til godkendelse!';
         } else {
           document.querySelector('.comment-form').innerText = 'Your comment has been sent for approval!';
         }
-        document.querySelector('.comment-form').style.display = 'block';
-        document.querySelector('.comment-form').style.className = 'comment';
+        document.querySelector('.comment-form').style.display = 'block'; 
+        document.querySelector('.comment-form').style.fontSize = '12px';
+        document.querySelector('.comment-form').style.fontStyle = 'italic';
       } else {
         const text = await response.text();
         console.log('Server Response:', text);
@@ -307,7 +298,8 @@ function initCommentForm() {
           document.querySelector('.comment-form').innerText = 'An error has ocurred. Try again later.';
         }
         document.querySelector('.comment-form').style.display = 'block'; 
-        document.querySelector('.comment-form').style.className = 'comment'; 
+        document.querySelector('.comment-form').style.fontSize = '12px';
+        document.querySelector('.comment-form').style.fontStyle = 'italic';
         try {
           if (text) {
             const data = JSON.parse(text);
@@ -321,6 +313,3 @@ function initCommentForm() {
   }
 }
 
-wordAgain.addEventListener("click", function(){ 
-  formContainer.style.display = 'flex'; // Display again if the user clicks the button to add another word
-});
