@@ -8,8 +8,10 @@ exports.handler = async function(event, context) {
     // Parse the incoming request body
     console.log("Received body:", event.body);
     const body = JSON.parse(event.body);
-    console.log('words from bod:', body.word);
-    const wordBuffer = Buffer.from(body.word);
+    console.log('body:', body);
+    const wordArray = Object.values(body.word); 
+    console.log('word from body:', wordArray);
+    const wordBuffer = Buffer.from(wordArray);
     console.log('word from Buffer', wordBuffer);
     const word = wordBuffer.toString('utf-8');
     console.log('word from utf-8:', word);
