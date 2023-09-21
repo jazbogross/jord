@@ -3,6 +3,18 @@ const wordAgain = document.getElementById('wordAgain');
 let allWords = [];
 let activeSpanElement = null; // Variable to store the active span
 let activeCommentsDiv = null; // Variable to store the active comments div
+let browserLanguage = getBrowserLanguage();
+let isDanish = true;
+
+if (browserLanguage.includes('da')) {
+  isDanish = true;
+} else {
+  isDanish = false;
+}
+
+console.log(browserLanguage);
+console.log(isDanish);
+
 
 fetch('words.json')
   .then(response => response.json())
@@ -11,6 +23,12 @@ fetch('words.json')
     populateContainer(allWords, container);
   })
   .catch(error => console.log('There was an error:', error));
+
+function getBrowserLanguage() {
+  const lang = navigator.language || navigator.userLanguage; // For older versions of IE
+  return lang;
+}
+  
 
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -113,7 +131,11 @@ function showComments(comments, wordElement) {
   const input = document.createElement('input');
   input.type = 'text';
   input.name = 'comment';
-  input.placeholder = 'Skriv din kommentar...';
+  if (isDanish == true) {
+    input.placeholder = 'Skriv din kommentar...';
+    } else {
+    input.placeholder = 'Write your comment...';
+    }
   form.appendChild(input);
   
   const button = document.createElement('button');
@@ -237,6 +259,7 @@ function initCommentForm() {
   if (commentForm) {
     commentForm.addEventListener('submit', async function (e) {
       e.preventDefault();
+      document.querySelector('.comment-form').style.display = 'none'; // Hide the form immediately
 
       const recaptchaToken = await grecaptcha.execute('6LcYAzUoAAAAAKnfXcLaFMzaqOJAkxgsKJmmRsPn', { action: 'submit' });
 
@@ -262,20 +285,27 @@ function initCommentForm() {
       /////////////////////////////////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////////////////////
 
-      document.querySelector('.comment-form').style.display = 'none'; // Hide the form immediately
+      
 
       if (response.ok) {
         const data = await response.json();
         console.log('Success:', data);
-        document.querySelector('.comment-form').innerText = 'Din kommentar er sendt til godkendelse og bliver vist imorgen';
+        // remove the comment form and display a success message which is styled differently font size
+        if (isDanish == true) {
+          document.querySelector('.comment-form').innerText = 'Din kommentar er blevet sendt til godkendelse!';
+        } else {
+          document.querySelector('.comment-form').innerText = 'Your comment has been sent for approval!';
+        }
         document.querySelector('.comment-form').style.display = 'block';
         document.querySelector('.comment-form').style.className = 'comment';
-        // document.querySelector('.comment-form').remove(); // Remove the form from the DOM
       } else {
         const text = await response.text();
         console.log('Server Response:', text);
-        document.querySelector('.comment-form').innerText = 'Der er sket en fejl. Prøv igen senere.';
-        document.querySelector('.comment-form').reset();
+        if (isDanish == true) {
+          document.querySelector('.comment-form').innerText = 'Der er sket en fejl. Prøv igen senere.';
+        } else {
+          document.querySelector('.comment-form').innerText = 'An error has ocurred. Try again later.';
+        }
         document.querySelector('.comment-form').style.display = 'block'; 
         document.querySelector('.comment-form').style.className = 'comment'; 
         try {
