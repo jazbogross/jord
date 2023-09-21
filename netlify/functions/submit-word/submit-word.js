@@ -6,6 +6,7 @@ const secretKey = process.env.CAPTCHA_SECRET_KEY;
 exports.handler = async function(event, context) {
   try {
     // Parse the incoming request body
+    console.log("Received body:", event.body);
     const body = JSON.parse(event.body);
     console.log(body);
     const wordBuffer = Buffer.from(body.word);
