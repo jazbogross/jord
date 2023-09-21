@@ -159,7 +159,7 @@ container.addEventListener('scroll', () => {
   }
 });
 
-// CODE FOR WORD FORM LOGIC
+// WORD FORM LOGIC
 document.addEventListener('DOMContentLoaded', (event) => {
   const formContainer = document.getElementById('formContainer');
   const wordAgain = document.getElementById('wordAgain');
@@ -168,17 +168,16 @@ document.addEventListener('DOMContentLoaded', (event) => {
   form.addEventListener('submit', async function(e) {
     e.preventDefault();
     formContainer.style.display = 'none'; // Hide the form immediately
-    wordAgain.addEventListener("click", function(){ 
-      formContainer.style.display = 'flex'; // Display again if the user clicks the button to add another word
-    });
 
-    // Get the word from form data
+    // Get the word from form data and make it lowercase
     const formData = new FormData(form);
     const originalWord = formData.get('word');
+    const word = originalWord.toLowerCase();
 
     // UTF-8 encode the word
     const encoder = new TextEncoder();
-    const encodedWord = encoder.encode(originalWord);
+    const encodedWord = encoder.encode(word);
+    console.log(encodedWord);
 
     // Execute reCAPTCHA and get the token
     const recaptchaToken = await grecaptcha.execute('6LcYAzUoAAAAAKnfXcLaFMzaqOJAkxgsKJmmRsPn', { action: 'submit' });
@@ -280,3 +279,7 @@ function initCommentForm() {
     });
   }
 }
+
+wordAgain.addEventListener("click", function(){ 
+  formContainer.style.display = 'flex'; // Display again if the user clicks the button to add another word
+});
