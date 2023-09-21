@@ -9,10 +9,12 @@ let isDanish = true;
 
 cancelBtn.addEventListener("click", function(){
   formContainer.style.display = 'none'; // Hide the form if the user clicks the button to cancel
+  wordAgain.style.zIndex = "999";
 }) 
 
 wordAgain.addEventListener("click", function(){ 
   formContainer.style.display = 'flex'; // Display again if the user clicks the button to add another word
+  wordAgain.style.zIndex = "unset";
 });
 
 if (browserLanguage.includes('da')) {
