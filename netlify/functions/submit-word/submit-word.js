@@ -6,15 +6,10 @@ const secretKey = process.env.CAPTCHA_SECRET_KEY;
 exports.handler = async function(event, context) {
   try {
     // Parse the incoming request body
-    console.log("Received body:", event.body);
     const body = JSON.parse(event.body);
-    console.log('body:', body);
     const wordArray = Object.values(body.word); 
-    console.log('word from body:', wordArray);
     const wordBuffer = Buffer.from(wordArray);
-    console.log('word from Buffer', wordBuffer);
     const word = wordBuffer.toString('utf-8');
-    console.log('word from utf-8:', word);
     const captcha = body['g-recaptcha-response'];
     const githubToken = process.env.GITHUB_TOKEN;
 
@@ -41,7 +36,7 @@ exports.handler = async function(event, context) {
       return { statusCode: 400, body: "Captcha verification encountered an error" };
     }
 
-   // Step 2: Fetch Existing Words
+// Step 2: Fetch Existing Words
 // Fetch the current state of the JSON file from GitHub
 const repoContentResponse = await fetch(jsonURL, {
   headers: {
@@ -52,7 +47,7 @@ const repoContentData = await repoContentResponse.json();
 const existingWordsBase64 = repoContentData.content;
 
 // Decode the Base64 content to a string and parse it to a JSON object
-const existingWordsStr = Buffer.from(existingWordsBase64, 'base64').toString('utf-8'); // Updated this line
+const existingWordsStr = Buffer.from(existingWordsBase64, 'base64').toString('utf-8');
 let words = JSON.parse(existingWordsStr);
 
 // Step 3: Get local time
@@ -66,14 +61,21 @@ const existingWord = words.find(item => item.word === word);
 // If the word exists, update it; otherwise, add a new word
 if (existingWord) {
   existingWord.fontSize += 1;
-  existingWord.date = localTimestamp;
+
+  // Initialize updated as an empty array if it doesn't exist
+  if (!existingWord.updated || !Array.isArray(existingWord.updated)) {
+    existingWord.updated = [];
+  }
+  
+  // Push the new timestamp to the updated array
+  existingWord.updated.push(localTimestamp);
 } else {
-  words.push({ word, fontSize: 20, date: localTimestamp });
+  words.push({ word, fontSize: 20, date: localTimestamp, updated: [localTimestamp] });
 }
 
 // Step 4: Commit Changes
 // Encode the updated JSON data back to Base64
-const updatedWordsBase64 = Buffer.from(JSON.stringify(words), 'utf-8').toString('base64'); // Updated this line
+const updatedWordsBase64 = Buffer.from(JSON.stringify(words), 'utf-8').toString('base64');
 
 
     // Update the GitHub repository with the new content
