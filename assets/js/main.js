@@ -125,10 +125,7 @@ function showComments(comments, wordElement) {
   // Fetch padding-top style from wordElement and apply to commentsDiv
   const paddingTop = window.getComputedStyle(wordElement, null).getPropertyValue('padding-top');
   commentsDiv.style.paddingTop = paddingTop;
-  commentsDiv.style.width = 'auto'; // Set the width to auto
-  commentsDiv.style.maxWidth = '300px'; // Set maximum width to 300px
-  commentsDiv.style.display = 'flex';
-  commentsDiv.style.wordBreak = 'normal';
+
 
   // Insert a form with one text input field under the wordElement
 
@@ -142,7 +139,7 @@ function showComments(comments, wordElement) {
   inputWord.value = wordElement.innerText;
   form.appendChild(inputWord);
 
-  const input = document.createElement('input');
+  const input = document.createElement('textarea');
   input.type = 'text';
   input.name = 'comment';
   if (isDanish == true) {
@@ -374,7 +371,7 @@ function initCommentForm() {
       const formData = new FormData(commentForm);
       const payload = {
         commentWord: formData.get('commentWord'), // Assumes comment input has a name 'commentWord'
-        comment: formData.get('comment'), // Assumes comment input has a name 'text'
+        comment: formData.get('comment'), // Assumes comment input has a name 'comment'
         'g-recaptcha-response': recaptchaToken
       };
 
