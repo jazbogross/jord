@@ -8,6 +8,14 @@ let activeCommentsDiv = null; // Variable to store the active comments div
 let browserLanguage = getBrowserLanguage();
 let isDanish = true;
 
+fetch('words.json')
+  .then(response => response.json())
+  .then(data => {
+    allWords = data;
+    populateContainer(allWords, container);
+  })
+  .catch(error => console.log('There was an error:', error));
+
 cancelBtn.addEventListener("click", function(){
   formContainer.style.display = 'none'; // Hide the form if the user clicks the button to cancel
   wordAgain.style.zIndex = "999";
@@ -25,18 +33,10 @@ if (browserLanguage.includes('da')) {
   isDanish = true;
 } else {
   isDanish = false;
-  wordAgain.innerText = "Add another word from the garden";
+  wordAgain.innerText = "Send another word from the garden";
   cancelBtn.innerText = "Cancel";
   sendAWord.innerText = "Send a word from the garden";
 }
-
-fetch('words.json')
-  .then(response => response.json())
-  .then(data => {
-    allWords = data;
-    populateContainer(allWords, container);
-  })
-  .catch(error => console.log('There was an error:', error));
 
 function getBrowserLanguage() {
   const lang = navigator.language || navigator.userLanguage; // For older versions of IE
@@ -128,6 +128,7 @@ function showComments(comments, wordElement) {
   commentsDiv.style.width = 'auto'; // Set the width to auto
   commentsDiv.style.maxWidth = '300px'; // Set maximum width to 300px
   commentsDiv.style.display = 'flex';
+  commentsDiv.style.wordBreak = 'normal';
 
   // Insert a form with one text input field under the wordElement
 
