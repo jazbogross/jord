@@ -43,6 +43,34 @@ function getBrowserLanguage() {
   return lang;
 }
 
+
+// Function to intersperse SVGs among the words in the container
+async function intersperseSVGs(containerId) {
+  const container = document.getElementById(containerId);
+
+  // Fetch the list of SVG files from the Netlify function
+  const response = await fetch('/.netlify/functions/get-svgs');
+  const data = await response.json();
+  const svgFiles = data.svgFiles;
+  console.log(svgFiles);
+
+  const numWords = container.childNodes.length;
+  const numSVGs = svgFiles.length;
+
+  const interval = Math.floor(numWords / (numSVGs + 1));
+
+  let svgIndex = 0;
+  for (let i = interval; i < numWords && svgIndex < numSVGs; i += interval) {
+    await loadAndAddSVG('/', svgFiles[svgIndex], container, i);
+    svgIndex++;
+  }
+}
+
+
+
+
+
+
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
@@ -94,6 +122,7 @@ function populateContainer(data, container) {
 
       container.appendChild(wordElement);
     });
+    intersperseSVGs('word-container');
   } else {
     console.error("Data is undefined or not an array.");
   }
