@@ -9,7 +9,7 @@ exports.handler = async (event, context) => {
 
     // Fetch JSON data from COMMENTS
     const commentsResponse = await fetch('https://soft-crostata-20d468.netlify.app/comments.json');
-    const commentsData = await response.json();
+    const commentsData = await commentsResponse.json();
 
     // Get the current date and time
     const now = new Date();
