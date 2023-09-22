@@ -7,9 +7,10 @@ exports.handler = async (event, context) => {
     const response = await fetch('https://soft-crostata-20d468.netlify.app/words.json');
     const data = await response.json();
 
-    // Fetch JSON data from COMMENTS
+    // Fetch JSON data from COMMENTS and log to ensure data is fetched
     const commentsResponse = await fetch('https://soft-crostata-20d468.netlify.app/comments.json');
     const commentsData = await commentsResponse.json();
+    console.log("Fetched comments data:", commentsData);
 
     // Get the current date and time
     const now = new Date();
@@ -26,7 +27,7 @@ exports.handler = async (event, context) => {
     for (let word in commentsData) {
       for (let commentId in commentsData[word]) {
         let commentDate = new Date(commentsData[word][commentId].date);
-        if ((now - commentDate) < 86400000) {
+        if ((now - commentDate) < 86400000) {  // Less than 24 hours
           if (!recentComments[word]) recentComments[word] = [];
           recentComments[word].push(commentsData[word][commentId].text);
         }
@@ -45,17 +46,14 @@ exports.handler = async (event, context) => {
     }
 
     // Add recent comments to the email text
-    if (recentComments.length > 0) {
+    if (Object.keys(recentComments).length > 0) {  // Check if the object has keys
       text += '\n\nFølgende kommentarer er lavet idag:';
       for (let word in recentComments) {
-        text += `\n\n${word}:`;
-          recentComments[word].forEach(comment => {
-            text += `\n  - ${comment}`;
-          });
-        }
+        text += `\n\n${word}:\n  - ${recentComments[word].join('\n  - ')}`;
+      }
     } else {
       text += '\n\nOg der er ikke blevet kommenteret idag.';
-      }
+    }
 
     text += '\n\nHav en dejlig aften,\nHaven';
 

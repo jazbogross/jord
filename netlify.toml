@@ -11,7 +11,7 @@
   node_bundler = "esbuild"
 
   [functions.send-email]
-    schedule = "* 09 * * *"
+    schedule = "* 10 * * *"
 
   [functions.deploy]
     schedule = "0 0 * * *"

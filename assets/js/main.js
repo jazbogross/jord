@@ -137,7 +137,7 @@ function showComments(comments, wordElement) {
   inputWord.type = 'hidden';
   inputWord.name = 'commentWord';
   inputWord.value = wordElement.innerText;
-  form.appendChild(inputWord);
+  form.appendChild(inputWord.toLowerCase());
 
   const input = document.createElement('textarea');
   input.type = 'text';
@@ -396,6 +396,7 @@ function initCommentForm() {
         document.querySelector('.comment-form').style.fontSize = '12px';
         document.querySelector('.comment-form').style.fontStyle = 'italic';
         document.querySelector('.comment-form').style.width = '100px';
+        document.querySelector('.comment-form').style.wordBreak = 'normal';
       } else {
         const text = await response.text();
         console.log('Server Response:', text);
