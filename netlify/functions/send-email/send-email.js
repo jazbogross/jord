@@ -55,7 +55,7 @@ exports.handler = async (event, context) => {
       text += '\n\nOg der er ikke blevet kommenteret idag.';
     }
 
-    text += '\n\nHav en dejlig aften,\nHaven';
+    text += '\n\n\nHav en dejlig aften,\nHaven';
 
 
     // Create a Nodemailer transporter
