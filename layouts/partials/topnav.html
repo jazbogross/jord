@@ -3,58 +3,87 @@
 
 <div id="stldiv"></div>
 <div id="wordAgain">Send endnu et ord fra haven</div>
-<script>
-  var camera, scene, renderer, mesh, group;
 
-  init();
-  loadObject();
+<script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.156.1/build/three.module.js';
+    import { STLLoader } from 'https://unpkg.com/three@0.156.1/examples/jsm/loaders/STLLoader.js';
 
-  function init() {
-  camera = new THREE.PerspectiveCamera(70, 200 / 200, 0.01, 10);
-  camera.position.z = 1;
+    let camera, scene, renderer;
+    let geometry, material, mesh;
 
-  scene = new THREE.Scene();
+    const init = () => {
+      camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
+      camera.position.z = 1;
 
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // added alpha: true for transparency
-  renderer.setSize(200, 200); // set size to 200px x 200px
-  renderer.setClearColor(0x000000, 0); // set clear color to transparent
+      scene = new THREE.Scene();
 
-  document.getElementById('stldiv').appendChild(renderer.domElement);
-}
+  // Add ambient light
+  const ambientLight = new THREE.AmbientLight(0x999999); // Soft white light
+  scene.add(ambientLight);
 
+  // Add directional light
+  const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 5);
+  directionalLight.position.set(1, 1, 1).normalize();
+  scene.add(directionalLight);
 
-function loadObject() {
-  var loader = new THREE.STLLoader();
-  loader.load('/lillehaand.stl', function (geometry) {
-    console.log("STL Loaded successfully!");  // Debug line
+      const loader = new STLLoader();
+loader.load('lillehaand.stl', (geometry) => {
 
-    var material = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, specular: 0x111111, shininess: 200 });
+      // Compute vertex normals for proper shading
+      geometry.computeVertexNormals();
+
+      // Create a silver-like material
+      const material = new THREE.MeshPhongMaterial({
+      color: 0xC0C0C0,    // Silver color
+      specular: 0x111111, // Specular highlights
+      shininess: 100      // Shininess factor
+    });
+
     mesh = new THREE.Mesh(geometry, material);
 
-    // Debug lines to ensure geometry is within expected bounds
-    console.log(geometry.boundingBox); 
 
-    mesh.position.set(0, 0, 0);
-    mesh.scale.set(0.1, 0.1, 0.1);  // Scale down, assuming the model might be too large
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
+  // Compute bounding box to get the dimensions of the model
+  geometry.computeBoundingBox();
+  const boundingBox = geometry.boundingBox;
+  
+  // Find the longest dimension of the bounding box
+  const maxAxis = Math.max(
+    boundingBox.max.x - boundingBox.min.x,
+    boundingBox.max.y - boundingBox.min.y,
+    boundingBox.max.z - boundingBox.min.z
+  );
 
-    scene.add(mesh);
+  // Scale the mesh so its longest dimension is 1 unit
+  const scale = 0.8 / maxAxis;
+  mesh.scale.set(scale, scale, scale);
 
+  scene.add(mesh);
+});
+
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(200, 200);
+      document.getElementById('stldiv').appendChild(renderer.domElement);
+
+
+
+    }
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+
+      if (mesh) {
+        mesh.rotation.x += 0.005;
+        mesh.rotation.y += 0.005;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    init();
     animate();
-  }, undefined, function (error) {
-    console.error("An error occurred while loading the STL: ", error);  // Error handling
-  });
-}
 
-
-  function animate() {
-    requestAnimationFrame(animate);
-
-    mesh.rotation.x += 0.005;
-    mesh.rotation.y += 0.005;
-
-    renderer.render(scene, camera);
-  }
 </script>
+
+
 {{ end }}
