@@ -43,46 +43,80 @@ function getBrowserLanguage() {
   return lang;
 }
 
-
-// Function to intersperse SVGs among the words in the container
-async function intersperseSVGs(containerId) {
-  const container = document.getElementById(containerId);
-
-  // Fetch the list of SVG files from the Netlify function
-  const response = await fetch('/.netlify/functions/get-svgs');
-  const data = await response.json();
-  const svgFiles = data.svgFiles;
-  console.log(svgFiles);
-
-  const numWords = container.childNodes.length;
-  const numSVGs = svgFiles.length;
-
-  const interval = Math.floor(numWords / (numSVGs + 1));
-
-  let svgIndex = 0;
-  for (let i = interval; i < numWords && svgIndex < numSVGs; i += interval) {
-    await loadAndAddSVG('/', svgFiles[svgIndex], container, i);
-    svgIndex++;
-  }
-}
-
-
-
-
-
-
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+
+////////////////////////////////////////////// FIX //////////////////////////////////////////////
+////////////////////////////////////////////// FIX //////////////////////////////////////////////
+////////////////////////////////////////////// FIX //////////////////////////////////////////////
+////////////////////////////////////////////// FIX //////////////////////////////////////////////
+////////////////////////////////////////////// FIX //////////////////////////////////////////////
+
+
+function getSvgs() {
+// Fetch JSON data from the server
+fetch("/svgs.json")
+  .then((response) => {
+    // Parse the JSON data
+    return response.json();
+  })
+  .then((data) => {
+    // Access the 'filenames' array
+    const filenames = data.filenames;
+    console.log("Fetched filenames:", filenames);
+
+    // Select the parent container where you want to append the figures
+    const container = document.getElementById("word-container");
+
+    // Loop through each filename and add a figure element
+    filenames.forEach((filename) => {
+      // Create a new figure element
+      const figure = document.createElement("figure");
+      const cleanFilename = filename.replace(".svg", "");
+
+
+      // Create an img element and set its src and alt attributes
+      const img = document.createElement("img");
+      img.setAttribute("src", "/svg/" + filename);
+      img.setAttribute("alt", 'A vector graphic in handwriting of the word ' + cleanFilename);
+      img.setAttribute("width", "300");
+      console.log(img);
+
+      // Append the img to the figure
+      figure.appendChild(img);
+
+    });
+  })
+  .catch((error) => {
+    console.error("Error fetching JSON:", error);
+  });
+}
+
+
+
+////////////////////////////////////////////// FIX //////////////////////////////////////////////
+////////////////////////////////////////////// FIX //////////////////////////////////////////////
+////////////////////////////////////////////// FIX //////////////////////////////////////////////
+////////////////////////////////////////////// FIX //////////////////////////////////////////////
+////////////////////////////////////////////// FIX //////////////////////////////////////////////
+
+
+
+
+
 function populateContainer(data, container) {
   if (data && Array.isArray(data)) {
+    
     data.forEach(item => {
       let randX = Math.floor(Math.random() * 100) + 10;
       let randY = Math.floor(Math.random() * 100) + 10;
       let wordElement = document.createElement('div');
       let spanElement = document.createElement('span');
-      let capitalizedWord = capitalizeFirstLetter(item.word);
+      let itemWord = item.word;
+      let fontSize = item.fontSize;
+      let capitalizedWord = capitalizeFirstLetter(itemWord);
       wordElement.appendChild(spanElement);
       wordElement.className = 'word';
       wordElement.style.position = 'relative';
@@ -122,11 +156,16 @@ function populateContainer(data, container) {
 
       container.appendChild(wordElement);
     });
-    intersperseSVGs('word-container');
   } else {
     console.error("Data is undefined or not an array.");
   }
 }
+
+////////////////////////////////////////////// FIX //////////////////////////////////////////////
+////////////////////////////////////////////// FIX //////////////////////////////////////////////
+////////////////////////////////////////////// FIX //////////////////////////////////////////////
+////////////////////////////////////////////// FIX //////////////////////////////////////////////
+////////////////////////////////////////////// FIX //////////////////////////////////////////////
 
 async function fetchComments(word, wordElement) {
   try {
@@ -135,16 +174,23 @@ async function fetchComments(word, wordElement) {
     
     let comments = allComments[word] || [];
     if (comments.length === 0) {
-      comments = [
-        { text: `Der er endnu ikke blevet kommenteret på ${word}. Du kan skrive den første kommentar.` },];
-      showComments(comments, wordElement);
-    } else {
+      if (isDanish == true) {
+        comments = [
+          { text: `Der er endnu ikke blevet kommenteret på "${word}". Du kan skrive den første kommentar.` },];
+        showComments(comments, wordElement);
+        } else {
+          comments = [
+            { text: `There are still no comments on "${word}". You can write the first comment` },];
+          showComments(comments, wordElement);
+        }
+       } else {
     showComments(comments, wordElement); // Call showComments with fetched comments
     }
-    
-  } catch (error) {
-    console.error("There was an error fetching comments:", error);
+  } 
+    catch (error) {
+      console.error("There was an error fetching comments:", error);
   }
+
 }
 
 function showComments(comments, wordElement) {
