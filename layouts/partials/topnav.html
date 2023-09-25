@@ -1,7 +1,60 @@
-{{ define "topnav" }} 
+{{ define "topnav" }}
 
-<div id="topnav">
-  <div id="wordAgain">Send endnu et ord fra haven</div>
-</div>
 
-{{ end }} 
+<div id="stldiv"></div>
+<div id="wordAgain">Send endnu et ord fra haven</div>
+<script>
+  var camera, scene, renderer, mesh, group;
+
+  init();
+  loadObject();
+
+  function init() {
+  camera = new THREE.PerspectiveCamera(70, 200 / 200, 0.01, 10);
+  camera.position.z = 1;
+
+  scene = new THREE.Scene();
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // added alpha: true for transparency
+  renderer.setSize(200, 200); // set size to 200px x 200px
+  renderer.setClearColor(0x000000, 0); // set clear color to transparent
+
+  document.getElementById('stldiv').appendChild(renderer.domElement);
+}
+
+
+function loadObject() {
+  var loader = new THREE.STLLoader();
+  loader.load('/lillehaand.stl', function (geometry) {
+    console.log("STL Loaded successfully!");  // Debug line
+
+    var material = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, specular: 0x111111, shininess: 200 });
+    mesh = new THREE.Mesh(geometry, material);
+
+    // Debug lines to ensure geometry is within expected bounds
+    console.log(geometry.boundingBox); 
+
+    mesh.position.set(0, 0, 0);
+    mesh.scale.set(0.1, 0.1, 0.1);  // Scale down, assuming the model might be too large
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    scene.add(mesh);
+
+    animate();
+  }, undefined, function (error) {
+    console.error("An error occurred while loading the STL: ", error);  // Error handling
+  });
+}
+
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    mesh.rotation.x += 0.005;
+    mesh.rotation.y += 0.005;
+
+    renderer.render(scene, camera);
+  }
+</script>
+{{ end }}

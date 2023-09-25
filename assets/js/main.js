@@ -47,83 +47,76 @@ function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-
-////////////////////////////////////////////// FIX //////////////////////////////////////////////
-////////////////////////////////////////////// FIX //////////////////////////////////////////////
-////////////////////////////////////////////// FIX //////////////////////////////////////////////
-////////////////////////////////////////////// FIX //////////////////////////////////////////////
-////////////////////////////////////////////// FIX //////////////////////////////////////////////
-
-
-function getSvgs() {
-// Fetch JSON data from the server
-fetch("/svgs.json")
-  .then((response) => {
-    // Parse the JSON data
-    return response.json();
-  })
-  .then((data) => {
-    // Access the 'filenames' array
-    const filenames = data.filenames;
-    console.log("Fetched filenames:", filenames);
-
-    // Select the parent container where you want to append the figures
-    const container = document.getElementById("word-container");
-
-    // Loop through each filename and add a figure element
-    filenames.forEach((filename) => {
-      // Create a new figure element
-      const figure = document.createElement("figure");
-      const cleanFilename = filename.replace(".svg", "");
-
-
-      // Create an img element and set its src and alt attributes
-      const img = document.createElement("img");
-      img.setAttribute("src", "/svg/" + filename);
-      img.setAttribute("alt", 'A vector graphic in handwriting of the word ' + cleanFilename);
-      img.setAttribute("width", "300");
-      console.log(img);
-
-      // Append the img to the figure
-      figure.appendChild(img);
-
-    });
-  })
-  .catch((error) => {
+// Fetch sound files
+async function getSounds() {
+  try {
+    const response = await fetch("/lydfiler.json");
+    const jsonData = await response.json();
+    const filenames = jsonData.filenames;
+    return filenames;
+  } catch (error) {
     console.error("Error fetching JSON:", error);
-  });
+    return [];
+  }
 }
 
-
-
-////////////////////////////////////////////// FIX //////////////////////////////////////////////
-////////////////////////////////////////////// FIX //////////////////////////////////////////////
-////////////////////////////////////////////// FIX //////////////////////////////////////////////
-////////////////////////////////////////////// FIX //////////////////////////////////////////////
-////////////////////////////////////////////// FIX //////////////////////////////////////////////
-
-
-
-
+// Fetch SVGs and return an array of clean filenames
+async function getSvgs() {
+  try {
+    const response = await fetch("/svgs.json");
+    const jsonData = await response.json();
+    const filenames = jsonData.filenames;
+    const cleanFilenames = filenames.map(filename => filename.replace(".svg", ""));
+    return cleanFilenames;
+  } catch (error) {
+    console.error("Error fetching JSON:", error);
+    return [];
+  }
+}
 
 function populateContainer(data, container) {
-  if (data && Array.isArray(data)) {
-    
-    data.forEach(item => {
-      let randX = Math.floor(Math.random() * 100) + 10;
-      let randY = Math.floor(Math.random() * 100) + 10;
-      let wordElement = document.createElement('div');
-      let spanElement = document.createElement('span');
-      let itemWord = item.word;
-      let fontSize = item.fontSize;
-      let capitalizedWord = capitalizeFirstLetter(itemWord);
-      wordElement.appendChild(spanElement);
-      wordElement.className = 'word';
-      wordElement.style.position = 'relative';
-      wordElement.style.paddingLeft = randX + 'px';
-      wordElement.style.paddingTop = randY + 'px';
-      wordElement.style.fontSize = `${item.fontSize}px`;
-      spanElement.innerText = capitalizedWord;
+  let soundFilenames = [];
+  let wordElements = []; // Array to hold the 'word' div elements
+
+  getSounds().then(filenames => {
+    soundFilenames = filenames;
+
+    if (data && Array.isArray(data)) {
+      getSvgs().then(cleanFilenames => {
+        data.forEach(item => {
+          let randX = Math.floor(Math.random() * 100) + 10;
+          let randY = Math.floor(Math.random() * 100) + 10;
+          let wordElement = document.createElement('div');
+          let spanElement = document.createElement('span');
+          let itemWord = item.word;
+          let fontSize = item.fontSize;
+          let capitalizedWord = capitalizeFirstLetter(itemWord);
+          wordElement.className = 'word';
+          wordElement.style.position = 'relative';
+          wordElement.style.paddingLeft = randX + 'px';
+          wordElement.style.paddingTop = randY + 'px';
+          wordElement.style.fontSize = `${item.fontSize}px`;
+
+          if (cleanFilenames.includes(item.word)) {
+            const img = document.createElement("img");
+            img.setAttribute("src", "/svg/" + item.word + ".svg");
+            img.setAttribute("alt", 'A vector graphic in handwriting of the word ' + item.word);
+            img.setAttribute("height", fontSize * 2);
+            img.style.maxWidth = "95vw";
+            spanElement.style.fontSize = fontSize * 2 + 'px';
+            spanElement.appendChild(img);
+            wordElement.appendChild(spanElement);
+            container.appendChild(wordElement);
+          } else {
+            spanElement.innerText = capitalizedWord;
+            wordElement.appendChild(spanElement);
+            container.appendChild(wordElement);
+          }
+
+          // Append the 'word' div element to the wordElements array
+          wordElements.push(wordElement);
+
+      // Add the show-comments functionality as a click event to the span element which holds either the word or the svg representation of that word.
       spanElement.addEventListener('click', function() {
         // Remove any previous active span's background and comments
         if (activeSpanElement) {
@@ -151,21 +144,29 @@ function populateContainer(data, container) {
         fetchComments(item.word, wordElement);
         
         activeSpanElement = spanElement; // Set the new active span
-      });
-      
+        });
 
-      container.appendChild(wordElement);
-    });
-  } else {
-    console.error("Data is undefined or not an array.");
-  }
+        });
+
+        // Insert the audio files randomly among the 'word' elements
+        if (soundFilenames.length > 0) {
+          soundFilenames.forEach(soundFilename => {
+            const randomIndex = Math.floor(Math.random() * wordElements.length); // Get a random index
+            let soundElement = document.createElement('audio');
+            soundElement.setAttribute("src", "/lyd/" + soundFilename);
+            soundElement.setAttribute("controls", "controls");
+
+            // Place the audio element before the randomly chosen word element
+            container.insertBefore(soundElement, wordElements[randomIndex]);
+          });
+        }
+      });
+    } else {
+      console.error("Data is undefined or not an array.");
+    }
+  });
 }
 
-////////////////////////////////////////////// FIX //////////////////////////////////////////////
-////////////////////////////////////////////// FIX //////////////////////////////////////////////
-////////////////////////////////////////////// FIX //////////////////////////////////////////////
-////////////////////////////////////////////// FIX //////////////////////////////////////////////
-////////////////////////////////////////////// FIX //////////////////////////////////////////////
 
 async function fetchComments(word, wordElement) {
   try {
@@ -211,6 +212,7 @@ function showComments(comments, wordElement) {
   const inputWord = document.createElement('input');
   inputWord.type = 'hidden';
   inputWord.name = 'commentWord';
+  inputWord.maxLength = "500";
   inputWord.value = wordElement.innerText.toLowerCase();
   form.appendChild(inputWord);
 

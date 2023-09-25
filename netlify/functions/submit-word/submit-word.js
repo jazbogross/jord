@@ -6,16 +6,15 @@ exports.handler = async function(event, context) {
   try {
     // Parse the incoming request body
     const body = JSON.parse(event.body);
-    const wordArray = Object.values(body.word); 
+    const wordArray = Object.values(body.word);
     const wordBuffer = Buffer.from(wordArray);
-    const word = wordBuffer.toString('utf-8');
+    const wordsInput = wordBuffer.toString('utf-8').split(" "); // Split the user input by spaces
     const captcha = body['g-recaptcha-response'];
     const githubToken = process.env.GITHUB_TOKEN;
 
     // Step 1: CAPTCHA Verification
     let captchaResponse;
     try {
-      // Verify the captcha response with Google's reCAPTCHA service
       captchaResponse = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
         method: "POST",
         headers: {
@@ -23,10 +22,8 @@ exports.handler = async function(event, context) {
         },
         body: `secret=${secretKey}&response=${captcha}`
       });
-      
-      const captchaData = await captchaResponse.json();
 
-      // If the captcha is invalid or has a low score, return an error
+      const captchaData = await captchaResponse.json();
       if (!captchaData.success || captchaData.score <= 0.5) {
         return { statusCode: 400, body: JSON.stringify({ message: "Captcha verification failed" }) };
       }
@@ -35,69 +32,58 @@ exports.handler = async function(event, context) {
       return { statusCode: 400, body: "Captcha verification encountered an error" };
     }
 
-// Step 2: Fetch Existing Words
-// Fetch the current state of the JSON file from GitHub
-const repoContentResponse = await fetch(jsonURL, {
-  headers: {
-    'Authorization': `token ${githubToken}`
-  }
-});
-const repoContentData = await repoContentResponse.json();
-const existingWordsBase64 = repoContentData.content;
+    // Step 2: Fetch Existing Words
+    const repoContentResponse = await fetch(jsonURL, {
+      headers: {
+        'Authorization': `token ${githubToken}`
+      }
+    });
+    const repoContentData = await repoContentResponse.json();
+    const existingWordsBase64 = repoContentData.content;
+    const existingWordsStr = Buffer.from(existingWordsBase64, 'base64').toString('utf-8');
+    let words = JSON.parse(existingWordsStr);
 
-// Decode the Base64 content to a string and parse it to a JSON object
-const existingWordsStr = Buffer.from(existingWordsBase64, 'base64').toString('utf-8');
-let words = JSON.parse(existingWordsStr);
+    // Step 3: Get local time
+    const now = new Date();
+    const timezoneOffsetMinutes = now.getTimezoneOffset();
+    const localTimestamp = new Date(now.getTime() - timezoneOffsetMinutes * 60000).toISOString();
 
-// Step 3: Get local time
-const now = new Date();
-const timezoneOffsetMinutes = now.getTimezoneOffset();
-const localTimestamp = new Date(now.getTime() - timezoneOffsetMinutes * 60000).toISOString();
+    // Loop through the user input words
+    for (const word of wordsInput) {
+      const existingWord = words.find(item => item.word === word);
 
-// Check if the word already exists in the JSON data
-const existingWord = words.find(item => item.word === word);
+      if (existingWord) {
+        existingWord.fontSize += 1;
+        if (!existingWord.updated || !Array.isArray(existingWord.updated)) {
+          existingWord.updated = [];
+        }
+        existingWord.updated.push(localTimestamp);
+      } else {
+        words.push({ word, fontSize: 20, date: localTimestamp, updated: [localTimestamp] });
+      }
+    }
 
-// If the word exists, update it; otherwise, add a new word
-if (existingWord) {
-  existingWord.fontSize += 1;
+    // Step 4: Commit Changes
+    const updatedWordsBase64 = Buffer.from(JSON.stringify(words), 'utf-8').toString('base64');
 
-  // Initialize updated as an empty array if it doesn't exist
-  if (!existingWord.updated || !Array.isArray(existingWord.updated)) {
-    existingWord.updated = [];
-  }
-  
-  // Push the new timestamp to the updated array
-  existingWord.updated.push(localTimestamp);
-} else {
-  words.push({ word, fontSize: 20, date: localTimestamp, updated: [localTimestamp] });
-}
-
-// Step 4: Commit Changes
-// Encode the updated JSON data back to Base64
-const updatedWordsBase64 = Buffer.from(JSON.stringify(words), 'utf-8').toString('base64');
-
-
-    // Update the GitHub repository with the new content
     await fetch(jsonURL, {
       method: 'PUT',
       headers: {
         'Authorization': `token ${githubToken}`
       },
       body: JSON.stringify({
-        message: 'New word added [skip netlify]',
+        message: 'New word(s) added [skip netlify]',
         content: updatedWordsBase64,
-        sha: repoContentData.sha  // Important: Include the latest SHA to avoid conflicts
+        sha: repoContentData.sha // Important: Include the latest SHA to avoid conflicts
       })
     });
 
-    // Return a success response
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: 'Word successfully added or updated' })
+      body: JSON.stringify({ message: 'Word(s) successfully added or updated' })
     };
-  
+
   } catch (generalError) {
-    // Handle any unexpected errors
     console.error('General Error:', generalError);
     return {
       statusCode: 500,
