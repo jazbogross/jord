@@ -10,6 +10,7 @@ let activeCommentsDiv = null; // Variable to store the active comments div
 let browserLanguage = getBrowserLanguage();
 let isDanish = true;
 let namingPresent = false;
+hiddenWord = "";
 
 function createNameSuggestForm(wordElement) {
   if (namingPresent) {
@@ -133,10 +134,12 @@ async function populateContainer(data, container) {
             spanElement.appendChild(img);
             wordElement.appendChild(spanElement);
             container.appendChild(wordElement);
+            hiddenWord = item.word
           } else {
             spanElement.innerText = capitalizedWord;
             wordElement.appendChild(spanElement);
             container.appendChild(wordElement);
+            hiddenWord = item.word
           }
 
           // Append the 'word' div element to the wordElements array
@@ -238,7 +241,7 @@ function showComments(comments, wordElement) {
   inputWord.type = 'hidden';
   inputWord.name = 'commentWord';
   inputWord.maxLength = "500";
-  inputWord.value = wordElement.innerText.toLowerCase();
+  inputWord.value = hiddenWord.toLowerCase();
   form.appendChild(inputWord);
 
   const input = document.createElement('textarea');
