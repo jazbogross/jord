@@ -2,6 +2,7 @@ const container = document.getElementById('word-container');
 const wordAgain = document.getElementById('wordAgain');
 const cancelBtn = document.getElementById('cancel');
 const sendAWord = document.getElementById('sendAWord');
+let wordElements = []; // Array to hold the 'word' div elements
 let allWords = [];
 let infiniteScrolls = 0;
 let activeSpanElement = null; // Variable to store the active span
@@ -97,7 +98,7 @@ async function getSvgs() {
 
 async function populateContainer(data, container) {
   let soundFilenames = [];
-  let wordElements = []; // Array to hold the 'word' div elements
+
 
   getSounds().then(filenames => {
     soundFilenames = filenames;
