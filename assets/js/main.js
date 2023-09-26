@@ -3,16 +3,36 @@ const wordAgain = document.getElementById('wordAgain');
 const cancelBtn = document.getElementById('cancel');
 const sendAWord = document.getElementById('sendAWord');
 let allWords = [];
+let infiniteScrolls = 0;
 let activeSpanElement = null; // Variable to store the active span
 let activeCommentsDiv = null; // Variable to store the active comments div
 let browserLanguage = getBrowserLanguage();
 let isDanish = true;
 
+function createNameSuggestForm() {
+  const formContainer = document.createElement('div');
+  formContainer.setAttribute('id', 'name-container');
+  formContainer.innerHTML = `
+  <div><h1>Har du et forslag til hvad haven kan hedde?</h1></div>
+  <form id="nameSuggestForm" action="https://XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" method="POST">
+    <input type="text" name="name" placeholder="Navn" required>
+
+    <button type="submit">Send</button>
+  </form>
+  `;
+  const randomIndex = Math.floor(Math.random() * wordElements.length); // Get a random index
+  // Place the audio element before the randomly chosen word element
+  container.insertBefore(formContainer, wordElements[randomIndex]);
+}
+
+
+
+
 fetch('words.json')
   .then(response => response.json())
   .then(data => {
     allWords = data;
-    populateContainer(allWords, container);
+    populateContainer(data, container);
   })
   .catch(error => console.log('There was an error:', error));
 
@@ -39,7 +59,7 @@ if (browserLanguage.includes('da')) {
 }
 
 function getBrowserLanguage() {
-  const lang = navigator.language || navigator.userLanguage; // For older versions of IE
+  const lang = navigator.language || navigator.userLanguage; 
   return lang;
 }
 
@@ -74,7 +94,7 @@ async function getSvgs() {
   }
 }
 
-function populateContainer(data, container) {
+async function populateContainer(data, container) {
   let soundFilenames = [];
   let wordElements = []; // Array to hold the 'word' div elements
 
@@ -166,7 +186,6 @@ function populateContainer(data, container) {
     }
   });
 }
-
 
 async function fetchComments(word, wordElement) {
   try {
@@ -316,28 +335,50 @@ async function flyElementAround(element) {
   // Kick off the animation
   animateElement();
 
-    // Display the message after 5 seconds
+    // Display the message after 1 second
   setTimeout(() => {
     messageDiv.style.transition = 'opacity 0.5s ease';
     messageDiv.style.opacity = '1';
   }, 1000);
 
 
-  // Set up removal after 10 seconds
+  // Set up removal after 5 seconds
   setTimeout(() => {
     element.style.left = '2000px';
     setTimeout(() => element.remove(), 500);
   }, 5000);
 }
 
-// Event listener for scroll
-container.addEventListener('scroll', () => {
-  const { scrollTop, scrollHeight, clientHeight } = container;
-
-  // Check if scrolled near bottom of the page
+// Event listener for infinite scroll
+window.addEventListener('scroll', () => {
+  const scrollTop = window.scrollY; 
+  const scrollHeight = document.documentElement.scrollHeight; 
+  const clientHeight = window.innerHeight;
+  
+  // console.log(`scrollTop: ${scrollTop}, scrollHeight: ${scrollHeight}, clientHeight: ${clientHeight}`);
+  
   if (scrollTop + clientHeight >= scrollHeight - 5) {
-    populateContainer(allWords, container); // Re-run populateContainer
-  }
+    infiniteScrolls ++;
+//    console.log(infiniteScrolls);
+    populateContainer(allWords, container);
+//    if (infiniteScrolls == 16) {
+//      const spacer = document.createElement('div');
+//      spacer.style.height = "100vw";
+//      spacer.style.width = "100vw";
+//      container.appendChild(spacer);
+//      populateContainer(allWords, container);
+//    }
+//    if (infiniteScrolls == 17) {
+//      container.innerText = "";
+//      const spacer = document.createElement('div');
+//      spacer.style.height = "100vw";
+//      spacer.style.width = "100vw";
+//      container.appendChild(spacer);
+//      // allWords = [];
+//      infiniteScrolls = 0;
+//      populateContainer(allWords, container);
+//  } 
+}
 });
 
 // WORD FORM LOGIC
@@ -433,7 +474,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
   });
 });
 
-
 // COMMENT FORM LOGIC ////////////////////////////////////////////////////////////////////
 function initCommentForm() {
   const commentForm = document.querySelector('.comment-form');
@@ -474,6 +514,7 @@ function initCommentForm() {
         document.querySelector('.comment-form').style.fontStyle = 'italic';
         document.querySelector('.comment-form').style.width = '100px';
         document.querySelector('.comment-form').style.wordBreak = 'normal';
+        createNameSuggestForm();
       } else {
         const text = await response.text();
         console.log('Server Response:', text);

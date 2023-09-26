@@ -164,3 +164,29 @@ audio {
   width: 200px;
   height: 200px;
 }
+
+#name-container {
+  input {
+    font-size: 14px;
+    padding: 5px;
+    outline: none;
+    background-color: transparent;
+    border: 1px solid black;
+    font-family: 'Times New Roman', Times, serif;
+    word-break: normal;
+  }
+  button {
+    padding: 5px;
+    margin: 0px;
+    font-size: 12px;
+    background-color: white;
+    color: black;
+    border: 1px solid black;
+    font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: black;
+    color: white;
+  }
+}

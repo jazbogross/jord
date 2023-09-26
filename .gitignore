@@ -1,7 +1,11 @@
 # Local Netlify folder
 .netlify
 
-.DS_Store
-
+# Node and hugo folders
 /node_modules
 /public
+/resources
+
+
+#misc
+.DS_Store
