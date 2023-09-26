@@ -166,6 +166,9 @@ audio {
 }
 
 #name-container {
+  h1 {
+    font-family: Arial, Helvetica, sans-serif;
+  }
   input {
     font-size: 14px;
     padding: 5px;
@@ -174,6 +177,7 @@ audio {
     border: 1px solid black;
     font-family: 'Times New Roman', Times, serif;
     word-break: normal;
+    width: 350px;
   }
   button {
     padding: 5px;

@@ -9,8 +9,12 @@ let activeSpanElement = null; // Variable to store the active span
 let activeCommentsDiv = null; // Variable to store the active comments div
 let browserLanguage = getBrowserLanguage();
 let isDanish = true;
+let namingPresent = false;
 
-function createNameSuggestForm() {
+function createNameSuggestForm(wordElement) {
+  if (namingPresent) {
+    return;
+  } else {
   const formContainer = document.createElement('div');
   formContainer.setAttribute('id', 'name-container');
   formContainer.innerHTML = `
@@ -21,10 +25,10 @@ function createNameSuggestForm() {
     <button type="submit">Send</button>
   </form>
   `;
-  const randomIndex = Math.floor(Math.random() * wordElements.length); // Get a random index
-  console.log(randomIndex);
+  const sepcficIndex = wordElement; // Get a random index
   // Place the audio element before the randomly chosen word element
-  container.insertBefore(formContainer, wordElements[randomIndex]);
+  container.insertBefore(formContainer, sepcficIndex);
+  }
 }
 
 
@@ -260,7 +264,7 @@ function showComments(comments, wordElement) {
   wordElement.insertAdjacentElement('afterend', commentsDiv);
   activeCommentsDiv = commentsDiv; // Set the new active comments div
 
-  initCommentForm(); // Initialize the comment form
+  initCommentForm(wordElement); // Initialize the comment form
   
   let index = 0;
   const commentKeys = Object.keys(comments);
@@ -477,7 +481,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 });
 
 // COMMENT FORM LOGIC ////////////////////////////////////////////////////////////////////
-function initCommentForm() {
+function initCommentForm(wordElement) {
   const commentForm = document.querySelector('.comment-form');
 
   if (commentForm) {
@@ -516,7 +520,7 @@ function initCommentForm() {
         document.querySelector('.comment-form').style.fontStyle = 'italic';
         document.querySelector('.comment-form').style.width = '100px';
         document.querySelector('.comment-form').style.wordBreak = 'normal';
-        createNameSuggestForm();
+        createNameSuggestForm(wordElement);
       } else {
         const text = await response.text();
         console.log('Server Response:', text);
