@@ -27,7 +27,7 @@ function createNameSuggestForm(wordElement) {
   `;
   const sepcficIndex = wordElement; // Get a random index
   // Place the audio element before the randomly chosen word element
-  container.insertBefore(formContainer, sepcficIndex);
+  container.insertAfter(formContainer, sepcficIndex);
   }
 }
 
