@@ -21,6 +21,7 @@ function createNameSuggestForm() {
   </form>
   `;
   const randomIndex = Math.floor(Math.random() * wordElements.length); // Get a random index
+  console.log(randomIndex);
   // Place the audio element before the randomly chosen word element
   container.insertBefore(formContainer, wordElements[randomIndex]);
 }
