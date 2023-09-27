@@ -506,6 +506,9 @@ function initCommentForm(wordElement) {
       if (response.ok) {
         const data = await response.json();
         console.log('Success:', data);
+
+          createNameSuggestForm(nameForm);
+
         // remove the comment form and display a success message
         if (isDanish == true) {
           document.querySelector('.comment-form').innerText = 'Din kommentar er blevet sendt til godkendelse!';
@@ -517,7 +520,6 @@ function initCommentForm(wordElement) {
         document.querySelector('.comment-form').style.fontStyle = 'italic';
         document.querySelector('.comment-form').style.width = '100px';
         document.querySelector('.comment-form').style.wordBreak = 'normal';
-        createNameSuggestForm();
       } else {
         const text = await response.text();
         console.log('Server Response:', text);
@@ -551,38 +553,7 @@ function createNameSuggestForm() {
     const formContainer = document.createElement('div');
     formContainer.setAttribute('id', 'name-container');
 
-    // Create form element
-    const nameForm = document.createElement('form');
-    const formDivContainer = document.createElement('div');
-    formDivContainer.appendChild(nameForm);
-    nameForm.id = 'nameSuggestForm';
 
-    // Create title
-    const formTextContainer = document.createElement('div');
-    const title = document.createElement('h3');
-    title.innerText = isDanish ? "Har du et forslag til hvad haven skal hedde?" : "Do you have a suggestion for the garden's name?";
-    formTextContainer.appendChild(title);
-    formContainer.appendChild(formTextContainer);
-
-    // Create input field
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.name = 'name';
-    input.maxLength = '100';
-    input.required = true;
-    input.placeholder = isDanish ? 'Dit forslag...' : 'Your suggestion...';
-    nameForm.appendChild(input);
-
-    // Create submit button
-    const button = document.createElement('button');
-    button.type = 'submit';
-    button.innerText = isDanish ? 'Send' : 'Send';
-    nameForm.appendChild(button);
-
-    // Append form to formContainer
-    formContainer.appendChild(formDivContainer);
-    formContainer.style.display = 'flex';
-    formContainer.style.maxWidth = '350px';
 
     
 
@@ -730,4 +701,42 @@ if (browserLanguage.includes('da')) {
   sendAWord.innerText = "Send a word from the garden";
   otherHaveSugg.innerText = "Other people have suggested";
 }
+
+
+
+
+
+
+    // Create form element
+    const nameForm = document.createElement('form');
+    const formDivContainer = document.createElement('div');
+    formDivContainer.appendChild(nameForm);
+    nameForm.id = 'nameSuggestForm';
+
+    // Create title
+    const formTextContainer = document.createElement('div');
+    const title = document.createElement('h3');
+    title.innerText = isDanish ? "Har du et forslag til hvad haven skal hedde?" : "Do you have a suggestion for the garden's name?";
+    formTextContainer.appendChild(title);
+    formContainer.appendChild(formTextContainer);
+
+    // Create input field
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = 'name';
+    input.maxLength = '100';
+    input.required = true;
+    input.placeholder = isDanish ? 'Dit forslag...' : 'Your suggestion...';
+    nameForm.appendChild(input);
+
+    // Create submit button
+    const button = document.createElement('button');
+    button.type = 'submit';
+    button.innerText = isDanish ? 'Send' : 'Send';
+    nameForm.appendChild(button);
+
+    // Append form to formContainer
+    formContainer.appendChild(formDivContainer);
+    formContainer.style.display = 'flex';
+    formContainer.style.maxWidth = '350px';
 
