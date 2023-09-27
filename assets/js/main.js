@@ -588,6 +588,7 @@ function createNameSuggestForm(wordElement) {
 
     // Append formContainer to wordElement
     activeWordElement.insertAdjacentElement('afterend', formContainer);
+    console.log('nameForm created:', nameForm);
   }
    // Add submit event listener to the form
    if (nameForm) {
