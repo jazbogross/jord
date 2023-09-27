@@ -591,7 +591,7 @@ function createNameSuggestForm(wordElement) {
     activeWordElement.insertAdjacentElement('afterend', formContainer);
   }
    // Add submit event listener to the form
-   formContainer.addEventListener('submit', async function(e) {
+   form.addEventListener('submit', async function(e) {
     e.preventDefault();
     formContainer.style.display = 'none'; // Hide the form immediately
     
