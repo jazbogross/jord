@@ -7,10 +7,12 @@ let allWords = [];
 let infiniteScrolls = 0;
 let activeSpanElement = null; // Variable to store the active span
 let activeCommentsDiv = null; // Variable to store the active comments div
+let activeWordElement = null; // Variable to store the active word element
 let browserLanguage = getBrowserLanguage();
 let isDanish = true;
 let namingPresent = false;
-hiddenWord = "";
+let hiddenWord = "";
+let commElPos, wordElPos;
 
 function createNameSuggestForm(wordElement) {
   if (namingPresent) {
@@ -31,9 +33,6 @@ function createNameSuggestForm(wordElement) {
   container.insertAfter(formContainer, sepcficIndex);
   }
 }
-
-
-
 
 fetch('words.json')
   .then(response => response.json())
@@ -107,7 +106,6 @@ async function populateContainer(data, container) {
 
   getSounds().then(filenames => {
     soundFilenames = filenames;
-
     if (data && Array.isArray(data)) {
       getSvgs().then(cleanFilenames => {
         data.forEach(item => {
@@ -123,7 +121,8 @@ async function populateContainer(data, container) {
           wordElement.style.paddingLeft = randX + 'px';
           wordElement.style.paddingTop = randY + 'px';
           wordElement.style.fontSize = `${item.fontSize}px`;
-
+          
+          // If the word is in the SVGs array, replace the word with the SVG representation of that word
           if (cleanFilenames.includes(item.word)) {
             const img = document.createElement("img");
             img.setAttribute("src", "/svg/" + item.word + ".svg");
@@ -171,7 +170,7 @@ async function populateContainer(data, container) {
       
         spanElement.style.backgroundColor = 'yellow'; // Highlight the span
         fetchComments(item.word, wordElement);
-        
+        hiddenWord = item.word;
         activeSpanElement = spanElement; // Set the new active span
         });
 
@@ -223,13 +222,12 @@ async function fetchComments(word, wordElement) {
 }
 
 function showComments(comments, wordElement) {
-  const commentsDiv = document.createElement('div');
+  let commentsDiv = document.createElement('div');
   commentsDiv.className = 'comments-div';
-  
+
   // Fetch padding-top style from wordElement and apply to commentsDiv
   const paddingTop = window.getComputedStyle(wordElement, null).getPropertyValue('padding-top');
   commentsDiv.style.paddingTop = paddingTop;
-
 
   // Insert a form with one text input field under the wordElement
 
@@ -266,11 +264,15 @@ function showComments(comments, wordElement) {
   // Insert the comments div after the clicked word
   wordElement.insertAdjacentElement('afterend', commentsDiv);
   activeCommentsDiv = commentsDiv; // Set the new active comments div
+  activeWordElement = wordElement; // Set the new active word element
+
 
   initCommentForm(wordElement); // Initialize the comment form
   
   let index = 0;
   const commentKeys = Object.keys(comments);
+
+
 
   async function appendNextComment() {
     if (index < commentKeys.length) {
@@ -288,9 +290,19 @@ function showComments(comments, wordElement) {
       index++;
       await new Promise(resolve => setTimeout(resolve, 300)); // Wait for 300 milliseconds before appending the next comment
       appendNextComment();
+      //activeCommentsDiv = commentsDiv; // Set the new active comments div
     }
+        // Adjust positions
+        adjustCommentsPos(commElPos, wordElPos);     
   }
-  appendNextComment();
+    commElPos = commentsDiv.offsetTop;
+    wordElPos = wordElement.offsetTop;
+    activeCommentsDiv = commentsDiv; // Set the new active comments div
+
+    appendNextComment().then(() => {
+    // console.log("Before adjustCommentsPos", commentsDiv, wordElement);
+    adjustCommentsPos(commentsDiv, wordElement);
+  });
 }
 
 async function flyElementAround(element) {
@@ -389,6 +401,39 @@ window.addEventListener('scroll', () => {
 //  } 
 }
 });
+
+// Event listener for window resize
+window.addEventListener('resize', () => {
+  console.log("Before adjustCommentsPos", activeCommentsDiv, activeWordElement);
+  adjustCommentsPos(activeCommentsDiv, activeWordElement);
+});
+
+// Function to adjust the position of commentsDiv
+function adjustCommentsPos(commentsDiv, wordElement) {
+  // Update positions
+  const commElPos = commentsDiv.offsetTop;
+  const wordElPos = wordElement.offsetTop;
+
+  if (commElPos > wordElPos) {
+    // Find the final div in wordElement
+    const divs = wordElement.querySelectorAll('div');
+    const finalDiv = divs[divs.length];
+
+    // Remove commentsDiv from its current location
+    commentsDiv.remove();
+
+    if (finalDiv) {
+      // Insert commentsDiv after the final div in wordElement
+      finalDiv.insertAdjacentElement('afterend', commentsDiv);
+    } else {
+      // If no divs are found within wordElement, append commentsDiv to wordElement
+       wordElement.appendChild(commentsDiv);
+       commentsDiv.style.paddingTop = "0px";
+    }
+  } else {
+    return;
+  }
+}
 
 // WORD FORM LOGIC
 document.addEventListener('DOMContentLoaded', (event) => {
