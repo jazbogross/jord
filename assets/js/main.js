@@ -517,7 +517,7 @@ function initCommentForm(wordElement) {
         document.querySelector('.comment-form').style.fontStyle = 'italic';
         document.querySelector('.comment-form').style.width = '100px';
         document.querySelector('.comment-form').style.wordBreak = 'normal';
-        createNameSuggestForm(wordElement);
+        createNameSuggestForm();
       } else {
         const text = await response.text();
         console.log('Server Response:', text);
@@ -543,7 +543,7 @@ function initCommentForm(wordElement) {
   }
 }
 
-function createNameSuggestForm(wordElement) {
+function createNameSuggestForm() {
   if (namingPresent) {
     return;
   } else {
@@ -624,6 +624,7 @@ function createNameSuggestForm(wordElement) {
       suggestedWords.style.opacity = '1';
       setTimeout(() => {
         messageDiv.style.opacity = '0';
+        formContainer.style.display = 'none';
           setTimeout(() => {
             wordAgain.style.zIndex = "999";
           }, 1000);
