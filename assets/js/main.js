@@ -707,36 +707,36 @@ if (browserLanguage.includes('da')) {
 
 
 
-    // Create form element
-    const nameForm = document.createElement('form');
-    const formDivContainer = document.createElement('div');
-    formDivContainer.appendChild(nameForm);
-    nameForm.id = 'nameSuggestForm';
-
-    // Create title
-    const formTextContainer = document.createElement('div');
-    const title = document.createElement('h3');
-    title.innerText = isDanish ? "Har du et forslag til hvad haven skal hedde?" : "Do you have a suggestion for the garden's name?";
-    formTextContainer.appendChild(title);
-    formContainer.appendChild(formTextContainer);
-
-    // Create input field
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.name = 'name';
-    input.maxLength = '100';
-    input.required = true;
-    input.placeholder = isDanish ? 'Dit forslag...' : 'Your suggestion...';
-    nameForm.appendChild(input);
-
-    // Create submit button
-    const button = document.createElement('button');
-    button.type = 'submit';
-    button.innerText = isDanish ? 'Send' : 'Send';
-    nameForm.appendChild(button);
-
-    // Append form to formContainer
-    formContainer.appendChild(formDivContainer);
-    formContainer.style.display = 'flex';
-    formContainer.style.maxWidth = '350px';
+//    // Create form element
+//    const nameForm = document.createElement('form');
+//    const formDivContainer = document.createElement('div');
+//    formDivContainer.appendChild(nameForm);
+//    nameForm.id = 'nameSuggestForm';
+//
+//    // Create title
+//    const formTextContainer = document.createElement('div');
+//    const title = document.createElement('h3');
+//    title.innerText = isDanish ? "Har du et forslag til hvad haven skal hedde?" : "Do you have a suggestion for the garden's name?";
+//    formTextContainer.appendChild(title);
+//    formContainer.appendChild(formTextContainer);
+//
+//    // Create input field
+//    const input = document.createElement('input');
+//    input.type = 'text';
+//    input.name = 'name';
+//    input.maxLength = '100';
+//    input.required = true;
+//    input.placeholder = isDanish ? 'Dit forslag...' : 'Your suggestion...';
+//    nameForm.appendChild(input);
+//
+//    // Create submit button
+//    const button = document.createElement('button');
+//    button.type = 'submit';
+//    button.innerText = isDanish ? 'Send' : 'Send';
+//    nameForm.appendChild(button);
+//
+//    // Append form to formContainer
+//    formContainer.appendChild(formDivContainer);
+//    formContainer.style.display = 'flex';
+//    formContainer.style.maxWidth = '350px';
 
