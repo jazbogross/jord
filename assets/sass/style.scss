@@ -167,9 +167,12 @@ audio {
 }
 
 #name-container {
-  h1 {
+  h3 {
     font-family: Arial, Helvetica, sans-serif;
   }
+}
+
+#nameSuggestForm {
   input {
     font-size: 14px;
     padding: 5px;

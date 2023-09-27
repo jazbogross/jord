@@ -26,11 +26,11 @@ function createNameSuggestForm(wordElement) {
     const form = document.createElement('form');
     form.id = 'nameSuggestForm';
    // form.setAttribute('action', 'https://XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-    form.setAttribute('method', 'POST');
+   // form.setAttribute('method', 'POST');
 
     // Create title
-    const title = document.createElement('h1');
-    title.innerText = isDanish ? 'Har du et forslag til hvad haven kan hedde?' : 'Do you have a suggestion for the garden name?';
+    const title = document.createElement('h3');
+    title.innerText = isDanish ? "Har du et forslag til hvad haven skal hedde?" : "Do you have a suggestion for the garden's name?";
     formContainer.appendChild(title);
 
     // Create input field
@@ -38,7 +38,7 @@ function createNameSuggestForm(wordElement) {
     input.type = 'text';
     input.name = 'name';
     input.required = true;
-    input.placeholder = isDanish ? 'Navn' : 'Name';
+    input.placeholder = isDanish ? 'Dit forslag...' : 'Your suggestion...';
     form.appendChild(input);
 
     // Create submit button
