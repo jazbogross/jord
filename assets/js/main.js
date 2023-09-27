@@ -24,6 +24,8 @@ function createNameSuggestForm(wordElement) {
 
     // Create form element
     const form = document.createElement('form');
+    const formDivContainer = document.createElement('div');
+    formDivContainer.appendChild(form);
     form.id = 'nameSuggestForm';
    // form.setAttribute('action', 'https://XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
    // form.setAttribute('method', 'POST');
@@ -33,7 +35,7 @@ function createNameSuggestForm(wordElement) {
     const title = document.createElement('h3');
     title.innerText = isDanish ? "Har du et forslag til hvad haven skal hedde?" : "Do you have a suggestion for the garden's name?";
     formTextContainer.appendChild(title);
-    formContainer.appendChild(title);
+    formContainer.appendChild(formTextContainer);
 
     // Create input field
     const input = document.createElement('input');
@@ -50,7 +52,7 @@ function createNameSuggestForm(wordElement) {
     form.appendChild(button);
 
     // Append form to formContainer
-    formContainer.appendChild(form);
+    formContainer.appendChild(formDivContainer);
     formContainer.style.display = 'flex';
     formContainer.style.maxWidth = '350px';
 
