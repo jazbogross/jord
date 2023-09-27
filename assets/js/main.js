@@ -552,10 +552,10 @@ async function createNameSuggestForm(wordElement) {
     formContainer.setAttribute('id', 'name-container');
 
     // Create form element
-    const form = document.createElement('form');
+    const nameForm = document.createElement('form');
     const formDivContainer = document.createElement('div');
-    formDivContainer.appendChild(form);
-    form.id = 'nameSuggestForm';
+    formDivContainer.appendChild(nameForm);
+    nameForm.id = 'nameSuggestForm';
 
     // Create title
     const formTextContainer = document.createElement('div');
@@ -571,13 +571,13 @@ async function createNameSuggestForm(wordElement) {
     input.maxLength = '100';
     input.required = true;
     input.placeholder = isDanish ? 'Dit forslag...' : 'Your suggestion...';
-    form.appendChild(input);
+    nameForm.appendChild(input);
 
     // Create submit button
     const button = document.createElement('button');
     button.type = 'submit';
     button.innerText = isDanish ? 'Send' : 'Send';
-    form.appendChild(button);
+    nameForm.appendChild(button);
 
     // Append form to formContainer
     formContainer.appendChild(formDivContainer);
@@ -590,7 +590,7 @@ async function createNameSuggestForm(wordElement) {
     activeWordElement.insertAdjacentElement('afterend', formContainer);
   }
    // Add submit event listener to the form
-   form.addEventListener('submit', async function(e) {
+   nameForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     formContainer.style.display = 'none'; // Hide the form immediately
     
