@@ -18,21 +18,43 @@ function createNameSuggestForm(wordElement) {
   if (namingPresent) {
     return;
   } else {
-  const formContainer = document.createElement('div');
-  formContainer.setAttribute('id', 'name-container');
-  formContainer.innerHTML = `
-  <div><h1>Har du et forslag til hvad haven kan hedde?</h1></div>
-  <form id="nameSuggestForm" action="https://XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" method="POST">
-    <input type="text" name="name" placeholder="Navn" required>
+    // Create form container
+    const formContainer = document.createElement('div');
+    formContainer.setAttribute('id', 'name-container');
 
-    <button type="submit">Send</button>
-  </form>
-  `;
-  const sepcficIndex = wordElement; // Get a random index
-  // Place the audio element before the randomly chosen word element
-  container.insertAfter(formContainer, sepcficIndex);
+    // Create form element
+    const form = document.createElement('form');
+    form.id = 'nameSuggestForm';
+   // form.setAttribute('action', 'https://XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+    form.setAttribute('method', 'POST');
+
+    // Create title
+    const title = document.createElement('h1');
+    title.innerText = isDanish ? 'Har du et forslag til hvad haven kan hedde?' : 'Do you have a suggestion for the garden name?';
+    formContainer.appendChild(title);
+
+    // Create input field
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = 'name';
+    input.required = true;
+    input.placeholder = isDanish ? 'Navn' : 'Name';
+    form.appendChild(input);
+
+    // Create submit button
+    const button = document.createElement('button');
+    button.type = 'submit';
+    button.innerText = isDanish ? 'Send' : 'Send';
+    form.appendChild(button);
+
+    // Append form to formContainer
+    formContainer.appendChild(form);
+
+    // Append formContainer to wordElement
+    wordElement.appendChild(formContainer);
   }
 }
+
 
 fetch('words.json')
   .then(response => response.json())
@@ -102,8 +124,6 @@ async function getSvgs() {
 
 async function populateContainer(data, container) {
   let soundFilenames = [];
-
-
   getSounds().then(filenames => {
     soundFilenames = filenames;
     if (data && Array.isArray(data)) {
