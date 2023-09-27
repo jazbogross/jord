@@ -543,7 +543,7 @@ function initCommentForm(wordElement) {
   }
 }
 
-function createNameSuggestForm(wordElement) {
+async function createNameSuggestForm(wordElement) {
   if (namingPresent) {
     return;
   } else {
@@ -556,8 +556,6 @@ function createNameSuggestForm(wordElement) {
     const formDivContainer = document.createElement('div');
     formDivContainer.appendChild(form);
     form.id = 'nameSuggestForm';
-   // form.setAttribute('action', 'https://XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-   // form.setAttribute('method', 'POST');
 
     // Create title
     const formTextContainer = document.createElement('div');
@@ -570,6 +568,7 @@ function createNameSuggestForm(wordElement) {
     const input = document.createElement('input');
     input.type = 'text';
     input.name = 'name';
+    input.maxLength = '100';
     input.required = true;
     input.placeholder = isDanish ? 'Dit forslag...' : 'Your suggestion...';
     form.appendChild(input);
