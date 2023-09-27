@@ -2,6 +2,7 @@ const container = document.getElementById('word-container');
 const wordAgain = document.getElementById('wordAgain');
 const cancelBtn = document.getElementById('cancel');
 const sendAWord = document.getElementById('sendAWord');
+const otherHaveSugg = document.getElementById("otherHaveSuggestedH");
 let wordElements = []; // Array to hold the 'word' div elements
 let allWords = [];
 let infiniteScrolls = 0;
@@ -13,39 +14,6 @@ let isDanish = true;
 let namingPresent = false;
 let hiddenWord = "";
 let commElPos, wordElPos;
-
-
-
-
-fetch('words.json')
-  .then(response => response.json())
-  .then(data => {
-    allWords = data;
-    populateContainer(data, container);
-  })
-  .catch(error => console.log('There was an error:', error));
-
-cancelBtn.addEventListener("click", function(){
-  formContainer.style.display = 'none'; // Hide the form if the user clicks the button to cancel
-  wordAgain.style.zIndex = "999";
-  document.getElementById('wordForm').reset();
-
-}) 
-
-wordAgain.addEventListener("click", function(){ 
-  formContainer.style.display = 'flex'; // Display again if the user clicks the button to add another word
-  wordAgain.style.zIndex = "unset";
-   document.getElementById('wordForm').reset();
-});
-
-if (browserLanguage.includes('da')) {
-  isDanish = true;
-} else {
-  isDanish = false;
-  wordAgain.innerText = "Send another word from the garden";
-  cancelBtn.innerText = "Cancel";
-  sendAWord.innerText = "Send a word from the garden";
-}
 
 function getBrowserLanguage() {
   const lang = navigator.language || navigator.userLanguage; 
@@ -476,7 +444,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
       'g-recaptcha-response': recaptchaToken // Include the reCAPTCHA token
     };
 
-    const response = await fetch('https://soft-crostata-20d468.netlify.app/.netlify/functions/submit-word', {
+    const response = await fetch('/.netlify/functions/submit-word', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -527,7 +495,7 @@ function initCommentForm(wordElement) {
         'g-recaptcha-response': recaptchaToken
       };
 
-      const response = await fetch('https://soft-crostata-20d468.netlify.app/.netlify/functions/submit-comment', {
+      const response = await fetch('/.netlify/functions/submit-comment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -635,7 +603,7 @@ function createNameSuggestForm(wordElement) {
       'g-recaptcha-response': recaptchaToken,
     };
 
-    const response = await fetch('https://soft-crostata-20d468.netlify.app/.netlify/functions/submit-name', {
+    const response = await fetch('/.netlify/functions/submit-name', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -647,7 +615,18 @@ function createNameSuggestForm(wordElement) {
       const data = await response.json();
       console.log('Success:', data);
       formContainer.innerText = isDanish ? 'Dit forslag er blevet sendt!' : 'Your suggestion has been sent!';
-      // Apply additional styles or actions here
+      // Run the function to populate #suggested-words
+      fetchLatestNameSuggestions();
+      const suggestedWords = document.getElementById('suggested-words');
+      suggestedWords.style.transition = 'opacity 1s ease'
+      wordAgain.style.zIndex = "0";
+      suggestedWords.style.opacity = '1';
+      setTimeout(() => {
+        messageDiv.style.opacity = '0';
+          setTimeout(() => {
+            wordAgain.style.zIndex = "999";
+          }, 1000);
+      }, 5000);
     } else {
       const text = await response.text();
       console.log('Server Response:', text);
@@ -666,3 +645,80 @@ function createNameSuggestForm(wordElement) {
    // formContainer.style.display = 'block';
   });
 }
+
+
+async function fetchLatestNameSuggestions() {
+  try {
+    // Fetch the name suggestions from the server-side route
+    const response = await fetch('/navne-forslag.json');
+    if (!response.ok) {
+      throw new Error('Failed to fetch name suggestions');
+    }
+  
+    // Parse the JSON data
+    const nameSuggestions = await response.json();
+  
+    // Sort the name suggestions based on the latest date
+    nameSuggestions.sort((a, b) => {
+      const latestDateA = new Date(Math.max(...a.dates.map(date => new Date(date))));
+      const latestDateB = new Date(Math.max(...b.dates.map(date => new Date(date))));
+      return latestDateB - latestDateA;
+    });
+  
+    // Get only the latest 10 name suggestions
+    const latestSuggestions = nameSuggestions.slice(0, 10);
+  
+    // Get the #suggested-words div element
+    const suggestedWordsDiv = document.getElementById('suggested-words');
+  
+    // Create a new div and h1 element to contain the latest suggestions
+    const newDiv = document.createElement('div');
+    const newH1 = document.createElement('h1');
+  
+    // Set the h1 text to the latest 10 name suggestions, joined by ', '
+    newH1.innerText = latestSuggestions.map(suggestion => suggestion.nameSuggestion).join(', ');
+  
+    // Append the h1 to the div, and the div to #suggested-words
+    newDiv.appendChild(newH1);
+    suggestedWordsDiv.appendChild(newDiv);
+  } catch (error) {
+    console.error('An error occurred:', error);
+  }
+}
+
+
+
+
+
+
+fetch('words.json')
+  .then(response => response.json())
+  .then(data => {
+    allWords = data;
+    populateContainer(data, container);
+  })
+  .catch(error => console.log('There was an error:', error));
+
+cancelBtn.addEventListener("click", function(){
+  formContainer.style.display = 'none'; // Hide the form if the user clicks the button to cancel
+  wordAgain.style.zIndex = "999";
+  document.getElementById('wordForm').reset();
+
+}) 
+
+wordAgain.addEventListener("click", function(){ 
+  formContainer.style.display = 'flex'; // Display again if the user clicks the button to add another word
+  wordAgain.style.zIndex = "unset";
+   document.getElementById('wordForm').reset();
+});
+
+if (browserLanguage.includes('da')) {
+  isDanish = true;
+} else {
+  isDanish = false;
+  wordAgain.innerText = "Send another word from the garden";
+  cancelBtn.innerText = "Cancel";
+  sendAWord.innerText = "Send a word from the garden";
+  otherHaveSugg.innerText = "Other people have suggested";
+}
+

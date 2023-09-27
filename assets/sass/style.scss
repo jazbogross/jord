@@ -198,3 +198,28 @@ audio {
     color: white;
   }
 }
+
+#suggested-words {
+  display: flex;
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  width: 100vw;
+  height: 100vh;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  div {
+    font-family: 'Times New Roman', Times, serif;
+    margin: 50px;
+    h1 {
+      font-size: 50px;
+    }
+  }
+}
+
+#otherHaveSuggested {
+  position: fixed;
+  width: 100%;
+  text-align: center;
+  top: 25px;
+}
