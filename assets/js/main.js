@@ -49,9 +49,13 @@ function createNameSuggestForm(wordElement) {
 
     // Append form to formContainer
     formContainer.appendChild(form);
+    formContainer.style.display = 'flex';
+    formContainer.style.maxWidth = '350px';
+
+    
 
     // Append formContainer to wordElement
-    wordElement.appendChild(formContainer);
+    activeWordElement.insertAdjacentElement('afterend', formContainer);
   }
 }
 
