@@ -14,54 +14,7 @@ let namingPresent = false;
 let hiddenWord = "";
 let commElPos, wordElPos;
 
-function createNameSuggestForm(wordElement) {
-  if (namingPresent) {
-    return;
-  } else {
-    // Create form container
-    const formContainer = document.createElement('div');
-    formContainer.setAttribute('id', 'name-container');
 
-    // Create form element
-    const form = document.createElement('form');
-    const formDivContainer = document.createElement('div');
-    formDivContainer.appendChild(form);
-    form.id = 'nameSuggestForm';
-   // form.setAttribute('action', 'https://XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-   // form.setAttribute('method', 'POST');
-
-    // Create title
-    const formTextContainer = document.createElement('div');
-    const title = document.createElement('h3');
-    title.innerText = isDanish ? "Har du et forslag til hvad haven skal hedde?" : "Do you have a suggestion for the garden's name?";
-    formTextContainer.appendChild(title);
-    formContainer.appendChild(formTextContainer);
-
-    // Create input field
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.name = 'name';
-    input.required = true;
-    input.placeholder = isDanish ? 'Dit forslag...' : 'Your suggestion...';
-    form.appendChild(input);
-
-    // Create submit button
-    const button = document.createElement('button');
-    button.type = 'submit';
-    button.innerText = isDanish ? 'Send' : 'Send';
-    form.appendChild(button);
-
-    // Append form to formContainer
-    formContainer.appendChild(formDivContainer);
-    formContainer.style.display = 'flex';
-    formContainer.style.maxWidth = '350px';
-
-    
-
-    // Append formContainer to wordElement
-    activeWordElement.insertAdjacentElement('afterend', formContainer);
-  }
-}
 
 
 fetch('words.json')
@@ -622,3 +575,94 @@ function initCommentForm(wordElement) {
   }
 }
 
+function createNameSuggestForm(wordElement) {
+  if (namingPresent) {
+    return;
+  } else {
+    // Create form container
+    const formContainer = document.createElement('div');
+    formContainer.setAttribute('id', 'name-container');
+
+    // Create form element
+    const form = document.createElement('form');
+    const formDivContainer = document.createElement('div');
+    formDivContainer.appendChild(form);
+    form.id = 'nameSuggestForm';
+   // form.setAttribute('action', 'https://XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+   // form.setAttribute('method', 'POST');
+
+    // Create title
+    const formTextContainer = document.createElement('div');
+    const title = document.createElement('h3');
+    title.innerText = isDanish ? "Har du et forslag til hvad haven skal hedde?" : "Do you have a suggestion for the garden's name?";
+    formTextContainer.appendChild(title);
+    formContainer.appendChild(formTextContainer);
+
+    // Create input field
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = 'name';
+    input.required = true;
+    input.placeholder = isDanish ? 'Dit forslag...' : 'Your suggestion...';
+    form.appendChild(input);
+
+    // Create submit button
+    const button = document.createElement('button');
+    button.type = 'submit';
+    button.innerText = isDanish ? 'Send' : 'Send';
+    form.appendChild(button);
+
+    // Append form to formContainer
+    formContainer.appendChild(formDivContainer);
+    formContainer.style.display = 'flex';
+    formContainer.style.maxWidth = '350px';
+
+    
+
+    // Append formContainer to wordElement
+    activeWordElement.insertAdjacentElement('afterend', formContainer);
+  }
+   // Add submit event listener to the form
+   formContainer.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    formContainer.style.display = 'none'; // Hide the form immediately
+    
+    const recaptchaToken = await grecaptcha.execute('6LcYAzUoAAAAAKnfXcLaFMzaqOJAkxgsKJmmRsPn', { action: 'submit' });
+
+    const formData = new FormData(formContainer);
+    const payload = {
+      name: formData.get('name'),
+      'g-recaptcha-response': recaptchaToken,
+    };
+
+    const response = await fetch('https://soft-crostata-20d468.netlify.app/.netlify/functions/submit-name', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Success:', data);
+      formContainer.innerText = isDanish ? 'Dit forslag er blevet sendt!' : 'Your suggestion has been sent!';
+      // Apply additional styles or actions here
+    } else {
+      const text = await response.text();
+      console.log('Server Response:', text);
+      formContainer.innerText = isDanish ? 'Der er sket en fejl.<br>Prøv igen senere.' : 'An error has occurred.<br>Try again later.';
+      // Apply additional styles or actions here
+      try {
+        if (text) {
+          const data = JSON.parse(text);
+          console.log('Parsed Error:', data);
+        }
+      } catch (e) {
+        console.error('Parse Error:', e);
+      }
+    }
+
+   // formContainer.style.display = 'block';
+  });
+}
