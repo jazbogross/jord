@@ -29,8 +29,10 @@ function createNameSuggestForm(wordElement) {
    // form.setAttribute('method', 'POST');
 
     // Create title
+    const formTextContainer = document.createElement('div');
     const title = document.createElement('h3');
     title.innerText = isDanish ? "Har du et forslag til hvad haven skal hedde?" : "Do you have a suggestion for the garden's name?";
+    formTextContainer.appendChild(title);
     formContainer.appendChild(title);
 
     // Create input field
