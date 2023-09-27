@@ -589,64 +589,70 @@ function createNameSuggestForm() {
     // Append formContainer to wordElement
     activeWordElement.insertAdjacentElement('afterend', formContainer);
     console.log('nameForm created:', nameForm);
+    namingPresent = true;
   }
    // Add submit event listener to the form
-   if (nameForm) {
-   nameForm.addEventListener('submit', async function (e) {
-    e.preventDefault();
-    formContainer.style.display = 'none'; // Hide the form immediately
-    
-    const recaptchaToken = await grecaptcha.execute('6LcYAzUoAAAAAKnfXcLaFMzaqOJAkxgsKJmmRsPn', { action: 'submit' });
-
-    const formData = new FormData(formContainer);
-    const payload = {
-      name: formData.get('name'),
-      'g-recaptcha-response': recaptchaToken,
-    };
-
-    const response = await fetch('/.netlify/functions/submit-name', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      console.log('Success:', data);
-      formContainer.innerText = isDanish ? 'Dit forslag er blevet sendt!' : 'Your suggestion has been sent!';
-      // Run the function to populate #suggested-words
-      fetchLatestNameSuggestions();
-      const suggestedWords = document.getElementById('suggested-words');
-      suggestedWords.style.transition = 'opacity 1s ease'
-      wordAgain.style.zIndex = "0";
-      suggestedWords.style.opacity = '1';
-      setTimeout(() => {
-        messageDiv.style.opacity = '0';
-        formContainer.style.display = 'none';
-          setTimeout(() => {
-            wordAgain.style.zIndex = "999";
-          }, 1000);
-      }, 5000);
-    } else {
-      const text = await response.text();
-      console.log('Server Response:', text);
-      formContainer.innerText = isDanish ? 'Der er sket en fejl.<br>Prøv igen senere.' : 'An error has occurred.<br>Try again later.';
-      // Apply additional styles or actions here
-      try {
-        if (text) {
-          const data = JSON.parse(text);
-          console.log('Parsed Error:', data);
-        }
-      } catch (e) {
-        console.error('Parse Error:', e);
-      }
+   setTimeout(() => {
+    if (nameForm) {
+      nameForm.addEventListener('submit', async function (e) {
+       e.preventDefault();
+       formContainer.style.display = 'none'; // Hide the form immediately
+       
+       const recaptchaToken = await grecaptcha.execute('6LcYAzUoAAAAAKnfXcLaFMzaqOJAkxgsKJmmRsPn', { action: 'submit' });
+   
+       const formData = new FormData(formContainer);
+       const payload = {
+         name: formData.get('name'),
+         'g-recaptcha-response': recaptchaToken,
+       };
+   
+       const response = await fetch('/.netlify/functions/submit-name', {
+         method: 'POST',
+         headers: {
+           'Content-Type': 'application/json',
+         },
+         body: JSON.stringify(payload),
+       });
+   
+       if (response.ok) {
+         const data = await response.json();
+         console.log('Success:', data);
+         formContainer.innerText = isDanish ? 'Dit forslag er blevet sendt!' : 'Your suggestion has been sent!';
+         // Run the function to populate #suggested-words
+         fetchLatestNameSuggestions();
+         const suggestedWords = document.getElementById('suggested-words');
+         suggestedWords.style.transition = 'opacity 1s ease'
+         wordAgain.style.zIndex = "0";
+         suggestedWords.style.opacity = '1';
+         setTimeout(() => {
+           messageDiv.style.opacity = '0';
+           formContainer.style.display = 'none';
+             setTimeout(() => {
+               wordAgain.style.zIndex = "999";
+               nameForm.remove();
+               namingPresent = false;
+             }, 1000);
+         }, 5000);
+       } else {
+         const text = await response.text();
+         console.log('Server Response:', text);
+         formContainer.innerText = isDanish ? 'Der er sket en fejl.<br>Prøv igen senere.' : 'An error has occurred.<br>Try again later.';
+         // Apply additional styles or actions here
+         try {
+           if (text) {
+             const data = JSON.parse(text);
+             console.log('Parsed Error:', data);
+           }
+         } catch (e) {
+           console.error('Parse Error:', e);
+         }
+       }
+   
+      // formContainer.style.display = 'block';
+     });
     }
-
-   // formContainer.style.display = 'block';
-  });
- }
+  }, 1000);
+  
 }
 
 
