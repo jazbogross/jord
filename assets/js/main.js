@@ -543,7 +543,7 @@ function initCommentForm(wordElement) {
   }
 }
 
-async function createNameSuggestForm(wordElement) {
+function createNameSuggestForm(wordElement) {
   if (namingPresent) {
     return;
   } else {
@@ -590,7 +590,8 @@ async function createNameSuggestForm(wordElement) {
     activeWordElement.insertAdjacentElement('afterend', formContainer);
   }
    // Add submit event listener to the form
-   nameForm.addEventListener('submit', async function(e) {
+   if (nameForm) {
+   nameForm.addEventListener('submit', async function (e) {
     e.preventDefault();
     formContainer.style.display = 'none'; // Hide the form immediately
     
@@ -643,6 +644,7 @@ async function createNameSuggestForm(wordElement) {
 
    // formContainer.style.display = 'block';
   });
+ }
 }
 
 
