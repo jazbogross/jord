@@ -507,7 +507,7 @@ function initCommentForm(wordElement) {
         const data = await response.json();
         console.log('Success:', data);
 
-          createNameSuggestForm(nameForm);
+    //      createNameSuggestForm(nameForm);
 
         // remove the comment form and display a success message
         if (isDanish == true) {
@@ -545,6 +545,8 @@ function initCommentForm(wordElement) {
   }
 }
 
+// NAME SUGGESTION FORM LOGIC - Not implemented yet... ////////////////////////////////////////////////////////////////////
+
 function createNameSuggestForm() {
   if (namingPresent) {
     return;
@@ -552,10 +554,6 @@ function createNameSuggestForm() {
     // Create form container
     const formContainer = document.createElement('div');
     formContainer.setAttribute('id', 'name-container');
-
-
-
-    
 
     // Append formContainer to wordElement
     activeWordElement.insertAdjacentElement('afterend', formContainer);
@@ -589,21 +587,7 @@ function createNameSuggestForm() {
          const data = await response.json();
          console.log('Success:', data);
          formContainer.innerText = isDanish ? 'Dit forslag er blevet sendt!' : 'Your suggestion has been sent!';
-         // Run the function to populate #suggested-words
-         fetchLatestNameSuggestions();
-         const suggestedWords = document.getElementById('suggested-words');
-         suggestedWords.style.transition = 'opacity 1s ease'
-         wordAgain.style.zIndex = "0";
-         suggestedWords.style.opacity = '1';
-         setTimeout(() => {
-           messageDiv.style.opacity = '0';
-           formContainer.style.display = 'none';
-             setTimeout(() => {
-               wordAgain.style.zIndex = "999";
-               nameForm.remove();
-               namingPresent = false;
-             }, 1000);
-         }, 5000);
+         // Apply additional styles or actions here
        } else {
          const text = await response.text();
          console.log('Server Response:', text);
@@ -625,7 +609,6 @@ function createNameSuggestForm() {
   }, 1000);
   
 }
-
 
 async function fetchLatestNameSuggestions() {
   try {
@@ -666,10 +649,7 @@ async function fetchLatestNameSuggestions() {
   }
 }
 
-
-
-
-
+// NAME SUGGESTION FORM LOGIC - Not implemented yet... ////////////////////////////////////////////////////////////////////
 
 fetch('words.json')
   .then(response => response.json())
@@ -740,3 +720,22 @@ if (browserLanguage.includes('da')) {
 //    formContainer.style.display = 'flex';
 //    formContainer.style.maxWidth = '350px';
 
+
+
+
+
+//    Run the function to populate #suggested-words
+//    fetchLatestNameSuggestions();
+//    const suggestedWords = document.getElementById('suggested-words');
+//    suggestedWords.style.transition = 'opacity 1s ease'
+//    wordAgain.style.zIndex = "0";
+//    suggestedWords.style.opacity = '1';
+//    setTimeout(() => {
+//      messageDiv.style.opacity = '0';
+//      formContainer.style.display = 'none';
+//        setTimeout(() => {
+//          wordAgain.style.zIndex = "999";
+//          nameForm.remove();
+//          namingPresent = false;
+//        }, 1000);
+//    }, 5000);
