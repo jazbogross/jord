@@ -697,8 +697,8 @@ if (browserLanguage.includes('da')) {
 } else {
   isDanish = false;
   wordAgain.innerText = "Send another word from the garden";
-  cancelBtn.innerText = "Cancel";
-  sendAWord.innerText = "Send a word from the garden";
+  cancelBtn.innerText = "Don't Send";
+  sendAWord.innerText = "We are harvesting the words from the garden at Rønnebæksholm. Send a word from the garden.";
   otherHaveSugg.innerText = "Other people have suggested";
 }
 
