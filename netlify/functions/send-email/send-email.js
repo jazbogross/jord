@@ -4,11 +4,11 @@ const nodemailer = require('nodemailer');
 exports.handler = async (event, context) => {
   try {
     // Fetch JSON data from WORDS
-    const response = await fetch('https://soft-crostata-20d468.netlify.app/words.json');
+    const response = await fetch('https://jord.naarduikkeerher.dk/words.json');
     const data = await response.json();
 
     // Fetch JSON data from COMMENTS and log to ensure data is fetched
-    const commentsResponse = await fetch('https://soft-crostata-20d468.netlify.app/comments.json');
+    const commentsResponse = await fetch('https://jord.naarduikkeerher.dk/comments.json');
     const commentsData = await commentsResponse.json();
     console.log("Fetched comments data:", commentsData);
 
