@@ -10,7 +10,7 @@ exports.handler = async (event, context) => {
     // Fetch JSON data from COMMENTS and log to ensure data is fetched
     const commentsResponse = await fetch('https://jord.naarduikkeerher.dk/comments.json');
     const commentsData = await commentsResponse.json();
-    console.log("Fetched comments data:", commentsData);
+  //  console.log("Fetched comments data:", commentsData);
 
     // Get the current date and time
     const now = new Date();
