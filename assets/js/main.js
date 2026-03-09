@@ -1,6 +1,7 @@
 const SITE_URL = 'https://jord.naarduikkeerher.dk';
 const FUNCTION_BASE_URL = `${SITE_URL}/.netlify/functions`;
 const RECAPTCHA_SITE_KEY = '6LcYAzUoAAAAAKnfXcLaFMzaqOJAkxgsKJmmRsPn';
+const INFINITE_SCROLL_PREFETCH_MARGIN_PX = 1200;
 
 const state = {
   isDanish: true,
@@ -11,10 +12,13 @@ const state = {
   activeWordSpan: null,
   activeCommentsDiv: null,
   activeCommentForm: null,
-  activeNameItem: null
+  activeNameItem: null,
+  isAppendingGardenBatch: false
 };
 
 let elements = {};
+let gardenScrollObserver = null;
+let isGardenScrollFallbackBound = false;
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -168,6 +172,8 @@ function bindUi() {
   if (elements.nameFeedbackColumnsToggle) {
     elements.nameFeedbackColumnsToggle.addEventListener('click', toggleNameFeedbackColumns);
   }
+
+  window.addEventListener('resize', ensureGardenHasScrollableContent);
 }
 
 async function loadGardenContent() {
@@ -190,19 +196,13 @@ async function loadGardenContent() {
 
 function renderGarden() {
   elements.container.innerHTML = '';
+  disconnectGardenInfiniteScroll();
+  elements.scrollSentinel = null;
 
-  const renderItems = shuffleItems([
-    ...state.words.map((item) => ({ ...item, type: 'word' })),
-    ...state.names.map((item) => ({ ...item, type: 'name' }))
-  ]);
-
-  const renderedElements = renderItems.map((item) => {
-    const matrixItem = createMatrixItem(item);
-    elements.container.appendChild(matrixItem);
-    return matrixItem;
-  });
-
-  insertAudioElements(renderedElements);
+  appendGardenBatch();
+  ensureGardenScrollSentinel();
+  setupGardenInfiniteScroll();
+  ensureGardenHasScrollableContent();
 }
 
 function createMatrixItem(item) {
@@ -253,6 +253,132 @@ function insertAudioElements(renderedElements) {
     audioElement.setAttribute('controls', 'controls');
     elements.container.insertBefore(audioElement, renderedElements[randomIndex] || null);
   });
+}
+
+function appendGardenBatch() {
+  if (!elements.container || !hasGardenItems() || state.isAppendingGardenBatch) {
+    return false;
+  }
+
+  state.isAppendingGardenBatch = true;
+
+  const renderItems = buildGardenRenderItems();
+  const fragment = document.createDocumentFragment();
+  const renderedElements = [];
+  const insertionPoint = elements.scrollSentinel || null;
+
+  renderItems.forEach((item) => {
+    const matrixItem = createMatrixItem(item);
+    renderedElements.push(matrixItem);
+    fragment.appendChild(matrixItem);
+  });
+
+  elements.container.insertBefore(fragment, insertionPoint);
+  insertAudioElements(renderedElements);
+  state.isAppendingGardenBatch = false;
+
+  return renderedElements.length > 0;
+}
+
+function buildGardenRenderItems() {
+  return shuffleItems([
+    ...state.words.map((item) => ({ ...item, type: 'word' })),
+    ...state.names.map((item) => ({ ...item, type: 'name' }))
+  ]);
+}
+
+function hasGardenItems() {
+  return state.words.length > 0 || state.names.length > 0;
+}
+
+function ensureGardenScrollSentinel() {
+  if (!elements.container) {
+    return;
+  }
+
+  if (!elements.scrollSentinel) {
+    elements.scrollSentinel = document.createElement('div');
+    elements.scrollSentinel.className = 'scrollSentinel';
+    elements.scrollSentinel.setAttribute('aria-hidden', 'true');
+  }
+
+  if (elements.scrollSentinel.parentNode !== elements.container) {
+    elements.container.appendChild(elements.scrollSentinel);
+  } else if (elements.container.lastElementChild !== elements.scrollSentinel) {
+    elements.container.appendChild(elements.scrollSentinel);
+  }
+}
+
+function setupGardenInfiniteScroll() {
+  if (!elements.scrollSentinel) {
+    return;
+  }
+
+  if ('IntersectionObserver' in window) {
+    gardenScrollObserver = new IntersectionObserver(handleGardenScrollIntersection, {
+      root: null,
+      rootMargin: `${INFINITE_SCROLL_PREFETCH_MARGIN_PX}px 0px`,
+      threshold: 0
+    });
+    gardenScrollObserver.observe(elements.scrollSentinel);
+    return;
+  }
+
+  bindGardenScrollFallback();
+}
+
+function disconnectGardenInfiniteScroll() {
+  if (gardenScrollObserver) {
+    gardenScrollObserver.disconnect();
+    gardenScrollObserver = null;
+  }
+}
+
+function handleGardenScrollIntersection(entries) {
+  const isSentinelVisible = entries.some((entry) => entry.isIntersecting);
+  if (!isSentinelVisible) {
+    return;
+  }
+
+  ensureGardenHasScrollableContent();
+}
+
+function bindGardenScrollFallback() {
+  if (isGardenScrollFallbackBound) {
+    return;
+  }
+
+  window.addEventListener('scroll', maybeAppendGardenBatchOnScroll, { passive: true });
+  isGardenScrollFallbackBound = true;
+}
+
+function maybeAppendGardenBatchOnScroll() {
+  ensureGardenHasScrollableContent();
+}
+
+function ensureGardenHasScrollableContent() {
+  if (!hasGardenItems() || state.isAppendingGardenBatch) {
+    return;
+  }
+
+  let previousScrollHeight = -1;
+
+  while (getDistanceToBottom() <= INFINITE_SCROLL_PREFETCH_MARGIN_PX) {
+    const currentScrollHeight = document.documentElement.scrollHeight;
+    if (currentScrollHeight === previousScrollHeight) {
+      break;
+    }
+
+    previousScrollHeight = currentScrollHeight;
+    const didAppend = appendGardenBatch();
+    if (!didAppend) {
+      break;
+    }
+  }
+}
+
+function getDistanceToBottom() {
+  return document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
 }
 
 async function toggleWordComments(word, wordElement, spanElement) {
