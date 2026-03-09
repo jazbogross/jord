@@ -7,10 +7,14 @@ exports.handler = async (event, context) => {
     const response = await fetch('https://jord.naarduikkeerher.dk/words.json');
     const data = await response.json();
 
+    // Fetch JSON data from NAMES
+    const namesResponse = await fetch('https://jord.naarduikkeerher.dk/names.json');
+    const namesData = await namesResponse.json();
+
     // Fetch JSON data from COMMENTS and log to ensure data is fetched
     const commentsResponse = await fetch('https://jord.naarduikkeerher.dk/comments.json');
     const commentsData = await commentsResponse.json();
-  //  console.log("Fetched comments data:", commentsData);
+    console.log("Fetched comments data:", commentsData);
 
     // Get the current date and time
     const now = new Date();
@@ -20,6 +24,12 @@ exports.handler = async (event, context) => {
     const filteredData = data.filter(item => {
       const itemDate = new Date(item.date);
       return (now - itemDate) < 86400000; // Less than 24 hours (in milliseconds)
+    });
+
+    // Filter out names that were not submitted in the last 24 hours
+    const filteredNames = namesData.filter(item => {
+      const itemDate = new Date(item.date);
+      return (now - itemDate) < 86400000;
     });
 
     // Filter comments based on last 24 hours
@@ -36,13 +46,24 @@ exports.handler = async (event, context) => {
 
     let subject, text;
 
-    if (filteredData.length > 0) {
+    if (filteredData.length > 0 || filteredNames.length > 0) {
       const wordsOnly = filteredData.map(item => item.word).join('\n');
-      subject = `Ord fra Haven (${nowFormatted})`;
-      text = `Hej Monia,\n\nIdag er der blevet høstet følgende ord: \n\n${wordsOnly}`;
+      subject = `Nyt fra Haven (${nowFormatted})`;
+      if (filteredData.length > 0) {
+        text = `Hej Monia,\n\nIdag er der blevet høstet følgende ord: \n\n${wordsOnly}`;
+      } else {
+        text = `Hej Monia,\n\nIdag er der ikke blevet høstet nogen ord.`;
+      }
     } else {
-      subject = `Ingen Nye Ord fra Haven (${nowFormatted})`;
+      subject = `Ingen Nye Forslag fra Haven (${nowFormatted})`;
       text = `Hej Monia,\n\nIdag er der ikke blevet høstet nogen ord.`;
+    }
+
+    if (filteredNames.length > 0) {
+      const namesOnly = filteredNames.map(item => item.name).join('\n');
+      text += `\n\nFølgende navne til haven er foreslået: \n\n${namesOnly}`;
+    } else {
+      text += '\n\nOg der er ikke blevet foreslået nye navne til haven idag.';
     }
 
     // Add recent comments to the email text

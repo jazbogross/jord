@@ -5,21 +5,65 @@
 <div id="word-container">
 </div>
 
-<div id="formContainer">
+<div id="introContainer" class="overlayContainer">
+    <div class="overlayPanel introPanel">
+      <h1 id="introTitle">...</h1>
+      <p id="introText">...</p>
+      <div id="enterGarden">
+        <button type="button">ENTER</button>
+      </div>
+    </div>
+  </div>
+
+<div id="formContainer" class="overlayContainer is-hidden">
     <form id="wordForm">
-      <div id="sendAWord">Vi høster ordene fra haven på Rønnebæksholm. Send et ord fra haven.</div>
+      <div id="sendAWord">Send et ord fra haven</div>
         <div><label for="word"></label></div>
-        <div><input style="margin: 0px" type="text" id="word" name="word" autofocus="true" maxlength="35" autocomplete="off" required></div>
-        <div><button type="submit">Send</button><button id="cancel" type="reset">Send Ikke</button></div>
+        <div><input type="text" id="word" name="word" maxlength="35" autocomplete="off" required></div>
+        <div><button class="submitWordNameButton" type="submit">Send</button><button id="cancel" type="reset">Fortryd</button></div>
     </form>
   </div>
 
-  <div id="flyWord"></div>
-
-  <div id="suggested-words">
-    <div id="otherHaveSuggested"><h3 id="otherHaveSuggestedH" >Andre har foreslået</h3></div>
+  <div id="formContainerName" class="overlayContainer is-hidden">
+    <form id="nameForm">
+      <div id="sendAName">Foresla et navn til haven</div>
+      <div><label for="gardenName"></label></div>
+      <div><input type="text" id="gardenName" name="gardenName" maxlength="80" autocomplete="off" required></div>
+      <div><button class="submitWordNameButton" type="submit">Send</button><button id="cancelName" type="reset">Fortryd</button></div>
+    </form>
   </div>
-  
+
+  <div id="nameFeedbackContainer" class="overlayContainer is-hidden">
+    <div id="nameFeedbackDialog" class="overlayPanel">
+      <button id="closeNameFeedback" class="dialogClose" type="button" aria-label="Close dialog">x</button>
+      <h2 id="nameFeedbackTitle"></h2>
+      <form id="nameFeedbackForm">
+        <input type="hidden" id="feedbackName" name="feedbackName">
+        <div id="nameFeedbackPrompt">Hvordan lyder dette navn for dig?</div>
+        <div class="nameFeedbackCommentWrap">
+          <textarea id="nameFeedbackComment" name="comment" rows="1" placeholder="Skriv en kommentar hvis du vil..."></textarea>
+        </div>
+        <div class="nameFeedbackButtons">
+          <button type="submit" class="sentimentButton" data-sentiment="positive">I LIKE THIS NAME</button>
+          <button type="submit" class="sentimentButton" data-sentiment="negative">I DON'T LIKE THIS NAME</button>
+        </div>
+        <div id="nameFeedbackStatus" aria-live="polite"></div>
+      </form>
+      <button
+        id="nameFeedbackColumnsToggle"
+        class="feedbackToggle feedbackTogglePrimary"
+        type="button"
+        aria-expanded="false"
+        aria-controls="nameFeedbackColumns"
+      >
+        <span id="nameFeedbackColumnsTitle">View comments</span>
+      </button>
+      <div id="nameFeedbackColumns" class="nameFeedbackColumns" hidden>
+        <div id="nameFeedbackList" class="feedbackCommentList"></div>
+      </div>
+    </div>
+  </div>
+
     <script src="https://www.google.com/recaptcha/api.js?render=6LcYAzUoAAAAAKnfXcLaFMzaqOJAkxgsKJmmRsPn"></script>
 
 

@@ -1,64 +1,108 @@
-const fs = require('fs');
-const path = require('path');
+const fetch = require("node-fetch");
 
-exports.handler = async function(event, context) {
+const jsonURL = "https://api.github.com/repos/jazbogross/jord/contents/static/names.json";
+const secretKey = process.env.CAPTCHA_SECRET_KEY;
+
+exports.handler = async function(event) {
   try {
-    const payload = JSON.parse(event.body);
+    const body = JSON.parse(event.body);
+    const nameArray = Object.values(body.name || {});
+    const nameBuffer = Buffer.from(nameArray);
+    const submittedName = normalizeSpacing(nameBuffer.toString("utf-8"));
+    const captcha = body["g-recaptcha-response"];
+    const githubToken = process.env.GITHUB_TOKEN;
 
-     // Step 1: CAPTCHA Verification
-     let captchaResponse;
-     try {
-       // Verify the captcha response with Google's reCAPTCHA service
-       captchaResponse = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
-         method: "POST",
-         headers: {
-           'Content-Type': 'application/x-www-form-urlencoded'
-         },
-         body: `secret=${secretKey}&response=${captcha}`
-       });
-       
-       const captchaData = await captchaResponse.json();
- 
-       // If the captcha is invalid or has a low score, return an error
-       if (!captchaData.success || captchaData.score <= 0.5) {
-         return { statusCode: 400, body: JSON.stringify({ message: "Captcha verification failed" }) };
-       }
-     } catch (captchaError) {
-       console.error("Captcha Error:", captchaError);
-       return { statusCode: 400, body: "Captcha verification encountered an error" };
-     }
+    if (!submittedName) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ message: "Name is required" })
+      };
+    }
 
-    // Step 2: Fetch Existing Comments and compare with incoming
-    const nameSuggestion = payload.name;
-    const currentDate = new Date().toISOString();
+    const captchaResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: `secret=${secretKey}&response=${captcha}`
+    });
 
-    const filePath = path.join(__dirname, './navne-forslag.json');
-    let nameSuggestions = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const captchaData = await captchaResponse.json();
+    if (!captchaData.success || captchaData.score <= 0.5) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ message: "Captcha verification failed" })
+      };
+    }
 
-    const existingSuggestion = nameSuggestions.find(
-      (entry) => entry.nameSuggestion.toLowerCase() === nameSuggestion.toLowerCase()
-    );
+    const repoContentResponse = await fetch(jsonURL, {
+      headers: {
+        Authorization: `token ${githubToken}`
+      }
+    });
+    const repoContentData = await repoContentResponse.json();
+    const existingNamesBase64 = repoContentData.content;
+    const existingNamesStr = Buffer.from(existingNamesBase64, "base64").toString("utf-8");
+    const names = JSON.parse(existingNamesStr);
 
-    // Step 3: Push to json file based on whether the suggestion already exists or not
-    if (existingSuggestion) {
-      existingSuggestion.dates.push(currentDate);
+    const now = new Date();
+    const timezoneOffsetMinutes = now.getTimezoneOffset();
+    const localTimestamp = new Date(now.getTime() - timezoneOffsetMinutes * 60000).toISOString();
+    const normalizedName = normalizeText(submittedName);
+
+    const existingName = names.find((item) => normalizeText(item.name) === normalizedName);
+
+    if (existingName) {
+      existingName.fontSize += 1;
+      if (!Array.isArray(existingName.updated)) {
+        existingName.updated = [];
+      }
+      existingName.updated.push(localTimestamp);
     } else {
-      nameSuggestions.push({
-        nameSuggestion,
-        dates: [currentDate],
+      names.push({
+        name: submittedName,
+        fontSize: 20,
+        color: generateRandomHexColor(),
+        date: localTimestamp,
+        updated: [localTimestamp]
       });
     }
 
-    fs.writeFileSync(filePath, JSON.stringify(nameSuggestions, null, 2));
+    const updatedNamesBase64 = Buffer.from(JSON.stringify(names), "utf-8").toString("base64");
+
+    await fetch(jsonURL, {
+      method: "PUT",
+      headers: {
+        Authorization: `token ${githubToken}`
+      },
+      body: JSON.stringify({
+        message: "New garden name added [skip netlify]",
+        content: updatedNamesBase64,
+        sha: repoContentData.sha
+      })
+    });
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ status: 'Name suggestion submitted' }),
+      body: JSON.stringify({ message: "Name successfully added or updated" })
     };
   } catch (error) {
+    console.error("Name submission error:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to submit name suggestion' }),
+      body: JSON.stringify({ message: "An unexpected error occurred" })
     };
   }
 };
+
+function normalizeSpacing(value) {
+  return String(value || "").trim().replace(/\s+/g, " ");
+}
+
+function normalizeText(value) {
+  return normalizeSpacing(value).toLowerCase();
+}
+
+function generateRandomHexColor() {
+  return `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0")}`;
+}
