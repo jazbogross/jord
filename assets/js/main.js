@@ -1,12 +1,18 @@
-const SITE_URL = 'https://jord.naarduikkeerher.dk';
-const FUNCTION_BASE_URL = `${SITE_URL}/.netlify/functions`;
+const FUNCTION_BASE_URL = '/.netlify/functions';
 const RECAPTCHA_SITE_KEY = '6LcYAzUoAAAAAKnfXcLaFMzaqOJAkxgsKJmmRsPn';
 const INFINITE_SCROLL_PREFETCH_MARGIN_PX = 1200;
+const NAME_FEEDBACK_VOTE_LIMIT = 3;
+const NAME_FEEDBACK_VOTE_COOKIE = 'jord_name_feedback_votes';
+const NAME_FEEDBACK_VOTE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
+const DEFAULT_GARDEN_NAME_FONT_SIZE_PX = 20;
+const MIN_GARDEN_NAME_FONT_SIZE_PX = 10;
+const MAX_GARDEN_NAME_FONT_SIZE_PX = 72;
 
 const state = {
   isDanish: true,
   words: [],
   names: [],
+  nameFeedbackByName: {},
   soundFiles: [],
   svgWords: [],
   activeWordSpan: null,
@@ -178,15 +184,17 @@ function bindUi() {
 }
 
 async function loadGardenContent() {
-  const [words, names, soundManifest, svgManifest] = await Promise.all([
+  const [words, names, soundManifest, svgManifest, nameFeedbackByName] = await Promise.all([
     fetchStaticJson('words.json', []),
     fetchStaticJson('names.json', []),
     fetchStaticJson('lydfiler.json', { filenames: [] }),
-    fetchStaticJson('svgs.json', { filenames: [] })
+    fetchStaticJson('svgs.json', { filenames: [] }),
+    fetchStaticJson('name-feedback.json', {})
   ]);
 
   state.words = Array.isArray(words) ? words : [];
   state.names = Array.isArray(names) ? names : [];
+  state.nameFeedbackByName = normalizeNameFeedbackByName(nameFeedbackByName);
   state.soundFiles = Array.isArray(soundManifest.filenames) ? soundManifest.filenames : [];
   state.svgWords = Array.isArray(svgManifest.filenames)
     ? svgManifest.filenames.map((filename) => filename.replace('.svg', ''))
@@ -212,19 +220,24 @@ function createMatrixItem(item) {
   const span = document.createElement('span');
   const randomX = Math.floor(Math.random() * 100) + 10;
   const randomY = Math.floor(Math.random() * 100) + 10;
+  const fontSize = getGardenItemFontSize(item);
 
   wrapper.className = item.type === 'name' ? 'word garden-name' : 'word';
   wrapper.style.paddingLeft = `${randomX}px`;
   wrapper.style.paddingTop = `${randomY}px`;
-  wrapper.style.fontSize = `${item.fontSize || 20}px`;
+  wrapper.style.fontSize = `${fontSize}px`;
+
+  if (item.type === 'name') {
+    wrapper.dataset.nameKey = getGardenNameKey(item.name);
+  }
 
   if (item.type === 'word' && state.svgWords.includes(item.word)) {
     const img = document.createElement('img');
     img.setAttribute('src', `/svg/${item.word}.svg`);
     img.setAttribute('alt', `A vector graphic in handwriting of the word ${item.word}`);
-    img.setAttribute('height', (item.fontSize || 20) * 2);
+    img.setAttribute('height', fontSize * 2);
     img.style.maxWidth = '95vw';
-    span.style.fontSize = `${(item.fontSize || 20) * 2}px`;
+    span.style.fontSize = `${fontSize * 2}px`;
     span.appendChild(img);
   } else {
     span.textContent = item.type === 'word'
@@ -575,14 +588,17 @@ async function openNameFeedbackDialog(nameItem) {
   elements.feedbackName.value = nameItem.name;
   elements.nameFeedbackTitle.textContent = formatGardenNameForDisplay(nameItem.name);
   elements.nameFeedbackStatus.textContent = '';
-  setNameFeedbackButtonsDisabled(false);
+  setNameFeedbackControlsDisabled(false);
   resetTextareaHeight(elements.nameFeedbackComment);
 
-  const feedback = await fetchNameFeedback(nameItem.name);
+  const feedback = fetchNameFeedback(nameItem.name);
   renderNameFeedback(feedback);
   collapseNameFeedbackSections();
   showOverlay(elements.nameFeedbackContainer);
-  focusNameFeedbackComment();
+
+  if (!syncNameFeedbackVoteLimitState(nameItem.name)) {
+    focusNameFeedbackComment();
+  }
 }
 
 function closeNameFeedbackDialog() {
@@ -597,17 +613,14 @@ function closeNameFeedbackDialog() {
     delete elements.nameFeedbackForm.dataset.isSubmitting;
   }
 
-  setNameFeedbackButtonsDisabled(false);
+  setNameFeedbackControlsDisabled(false);
   resetTextareaHeight(elements.nameFeedbackComment);
   collapseNameFeedbackSections();
   hideOverlay(elements.nameFeedbackContainer);
 }
 
-async function fetchNameFeedback(name) {
-  const allFeedback = await fetchStaticJson('name-feedback.json', {});
-  const nameKey = normalizeText(name);
-
-  return allFeedback[nameKey] || createEmptyNameFeedback(name);
+function fetchNameFeedback(name) {
+  return state.nameFeedbackByName[getGardenNameKey(name)] || createEmptyNameFeedback(name);
 }
 
 function renderNameFeedback(feedback) {
@@ -655,10 +668,25 @@ function setNameFeedbackColumnsExpanded(isExpanded) {
   elements.nameFeedbackColumns.hidden = !isExpanded;
 }
 
-function setNameFeedbackButtonsDisabled(isDisabled) {
+function setNameFeedbackControlsDisabled(isDisabled) {
   elements.sentimentButtons.forEach((button) => {
     button.disabled = isDisabled;
   });
+
+  if (elements.nameFeedbackComment) {
+    elements.nameFeedbackComment.disabled = isDisabled;
+  }
+}
+
+function syncNameFeedbackVoteLimitState(name) {
+  const isLimitReached = hasReachedNameFeedbackVoteLimit(name);
+  setNameFeedbackControlsDisabled(isLimitReached);
+
+  if (isLimitReached && elements.nameFeedbackStatus) {
+    elements.nameFeedbackStatus.textContent = getCopy().nameFeedbackLimitReached;
+  }
+
+  return isLimitReached;
 }
 
 function closeIntro() {
@@ -773,24 +801,43 @@ async function submitNameFeedback(event) {
     return;
   }
 
+  const feedbackName = normalizeSpacing(formData.get('feedbackName') || '');
+  if (syncNameFeedbackVoteLimitState(feedbackName)) {
+    return;
+  }
+
   elements.nameFeedbackForm.dataset.isSubmitting = 'true';
   elements.nameFeedbackStatus.textContent = '';
-  setNameFeedbackButtonsDisabled(true);
+  setNameFeedbackControlsDisabled(true);
 
   try {
     const payload = {
-      name: formData.get('feedbackName'),
+      name: feedbackName,
       sentiment,
       comment: normalizeSpacing(formData.get('comment') || ''),
       'g-recaptcha-response': await executeRecaptcha()
     };
     const response = await postJson('submit-name-feedback', payload);
+    let responseBody = {};
 
-    if (!response.ok) {
-      throw new Error(await response.text());
+    try {
+      responseBody = await response.json();
+    } catch (parseError) {
+      responseBody = {};
     }
 
-    elements.nameFeedbackStatus.textContent = getCopy().nameFeedbackSuccess;
+    if (!response.ok) {
+      throw new Error(responseBody.message || 'Failed to submit feedback');
+    }
+
+    applySubmittedNameFeedback(payload.name, sentiment, payload.comment);
+    renderNameFeedback(fetchNameFeedback(payload.name));
+    updateGardenNameFontSize(payload.name);
+
+    const voteCount = incrementNameFeedbackVoteCount(payload.name);
+    elements.nameFeedbackStatus.textContent = voteCount >= NAME_FEEDBACK_VOTE_LIMIT
+      ? getCopy().nameFeedbackLimitReachedAfterSubmit
+      : getCopy().nameFeedbackSuccess;
     elements.nameFeedbackComment.value = '';
     resetTextareaHeight(elements.nameFeedbackComment);
   } catch (error) {
@@ -798,7 +845,10 @@ async function submitNameFeedback(event) {
     elements.nameFeedbackStatus.textContent = getCopy().errorMessage;
   } finally {
     delete elements.nameFeedbackForm.dataset.isSubmitting;
-    setNameFeedbackButtonsDisabled(false);
+
+    if (!state.activeNameItem || !hasReachedNameFeedbackVoteLimit(state.activeNameItem.name)) {
+      setNameFeedbackControlsDisabled(false);
+    }
   }
 }
 
@@ -895,7 +945,7 @@ async function postJson(functionName, payload) {
 
 async function fetchStaticJson(path, fallback) {
   try {
-    const response = await fetch(path);
+    const response = await fetch(resolveSitePath(path));
 
     if (!response.ok) {
       throw new Error(`Failed to load ${path}`);
@@ -906,6 +956,10 @@ async function fetchStaticJson(path, fallback) {
     console.error(`Error fetching ${path}:`, error);
     return fallback;
   }
+}
+
+function resolveSitePath(path) {
+  return path.startsWith('/') ? path : `/${path}`;
 }
 
 function showOverlay(element) {
@@ -1051,6 +1105,160 @@ function combineNameFeedbackComments(feedback) {
   return [...positiveComments, ...negativeComments].sort(sortByDate);
 }
 
+function normalizeNameFeedbackByName(feedbackByName) {
+  if (!feedbackByName || typeof feedbackByName !== 'object') {
+    return {};
+  }
+
+  return Object.entries(feedbackByName).reduce((normalizedFeedbackByName, [nameKey, feedback]) => {
+    normalizedFeedbackByName[nameKey] = normalizeNameFeedback(feedback, feedback?.name || nameKey);
+    return normalizedFeedbackByName;
+  }, {});
+}
+
+function normalizeNameFeedback(feedback, fallbackName) {
+  return {
+    name: normalizeSpacing(feedback?.name || fallbackName),
+    likes: Number(feedback?.likes || 0),
+    dislikes: Number(feedback?.dislikes || 0),
+    positiveComments: Array.isArray(feedback?.positiveComments) ? feedback.positiveComments : [],
+    negativeComments: Array.isArray(feedback?.negativeComments) ? feedback.negativeComments : []
+  };
+}
+
+function applySubmittedNameFeedback(name, sentiment, comment) {
+  const nameKey = getGardenNameKey(name);
+  const nextFeedback = normalizeNameFeedback(state.nameFeedbackByName[nameKey], name);
+
+  if (sentiment === 'positive') {
+    nextFeedback.likes += 1;
+    if (comment) {
+      nextFeedback.positiveComments.push({
+        text: comment,
+        date: new Date().toISOString()
+      });
+    }
+  } else {
+    nextFeedback.dislikes += 1;
+    if (comment) {
+      nextFeedback.negativeComments.push({
+        text: comment,
+        date: new Date().toISOString()
+      });
+    }
+  }
+
+  state.nameFeedbackByName[nameKey] = nextFeedback;
+}
+
+function getCookieValue(name) {
+  const encodedName = `${encodeURIComponent(name)}=`;
+  const cookies = document.cookie ? document.cookie.split('; ') : [];
+
+  for (const cookie of cookies) {
+    if (cookie.startsWith(encodedName)) {
+      return cookie.slice(encodedName.length);
+    }
+  }
+
+  return '';
+}
+
+function setCookie(name, value, maxAgeSeconds) {
+  const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `${encodeURIComponent(name)}=${value}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax${secureFlag}`;
+}
+
+function getNameFeedbackVoteCounts() {
+  const cookieValue = getCookieValue(NAME_FEEDBACK_VOTE_COOKIE);
+  if (!cookieValue) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(decodeURIComponent(cookieValue));
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function setNameFeedbackVoteCounts(counts) {
+  setCookie(
+    NAME_FEEDBACK_VOTE_COOKIE,
+    encodeURIComponent(JSON.stringify(counts)),
+    NAME_FEEDBACK_VOTE_COOKIE_MAX_AGE_SECONDS
+  );
+}
+
+function getGardenNameKey(name) {
+  return normalizeText(name);
+}
+
+function getNameFeedbackVoteCount(name) {
+  const counts = getNameFeedbackVoteCounts();
+  return Number(counts[getGardenNameKey(name)] || 0);
+}
+
+function hasReachedNameFeedbackVoteLimit(name) {
+  return getNameFeedbackVoteCount(name) >= NAME_FEEDBACK_VOTE_LIMIT;
+}
+
+function incrementNameFeedbackVoteCount(name) {
+  const counts = getNameFeedbackVoteCounts();
+  const nameKey = getGardenNameKey(name);
+  const nextVoteCount = Math.min(
+    NAME_FEEDBACK_VOTE_LIMIT,
+    Number(counts[nameKey] || 0) + 1
+  );
+
+  counts[nameKey] = nextVoteCount;
+  setNameFeedbackVoteCounts(counts);
+
+  return nextVoteCount;
+}
+
+function clampGardenNameFontSize(value) {
+  const numericValue = Number(value);
+  const safeValue = Number.isFinite(numericValue) ? numericValue : DEFAULT_GARDEN_NAME_FONT_SIZE_PX;
+
+  return Math.min(MAX_GARDEN_NAME_FONT_SIZE_PX, Math.max(MIN_GARDEN_NAME_FONT_SIZE_PX, safeValue));
+}
+
+function getGardenItemFontSize(item) {
+  const numericFontSize = Number(item.fontSize);
+
+  if (item.type === 'name') {
+    return getGardenNameDisplayFontSize(item.name);
+  }
+
+  return Number.isFinite(numericFontSize) ? numericFontSize : 20;
+}
+
+function getGardenNameBaseFontSize(name) {
+  return DEFAULT_GARDEN_NAME_FONT_SIZE_PX;
+}
+
+function getGardenNameDisplayFontSize(name) {
+  const feedback = fetchNameFeedback(name);
+  return clampGardenNameFontSize(getGardenNameBaseFontSize(name) + feedback.likes - feedback.dislikes);
+}
+
+function updateGardenNameFontSize(name) {
+  const nameKey = getGardenNameKey(name);
+  const displayFontSize = getGardenNameDisplayFontSize(name);
+
+  if (!elements.container) {
+    return;
+  }
+
+  elements.container.querySelectorAll('.word.garden-name').forEach((element) => {
+    if (element.dataset.nameKey === nameKey) {
+      element.style.fontSize = `${displayFontSize}px`;
+    }
+  });
+}
+
 function getBrowserLanguage() {
   return navigator.language || navigator.userLanguage || '';
 }
@@ -1101,6 +1309,8 @@ function getCopy() {
       nameSubmissionMessage: 'Dit navneforslag er sendt til godkendelse',
       wordCommentSuccess: 'Din kommentar er blevet sendt til godkendelse!',
       nameFeedbackSuccess: 'Din mening er blevet registret!',
+      nameFeedbackLimitReached: 'Du har allerede givet din mening om dette navn tre gange.',
+      nameFeedbackLimitReachedAfterSubmit: 'Din mening er blevet registreret. Du har nu givet din mening om dette navn tre gange.',
       selectSentimentMessage: 'Vælg venligst om du kan lide navnet eller ej.',
       errorMessage: 'Der er sket en fejl. Prøv igen senere.'
     };
@@ -1131,6 +1341,8 @@ function getCopy() {
     nameSubmissionMessage: 'Your name suggestion has been sent for approval',
     wordCommentSuccess: 'Your comment has been sent for approval!',
     nameFeedbackSuccess: 'Your feedback has been registered!',
+    nameFeedbackLimitReached: 'You have already expressed your opinion about this name three times.',
+    nameFeedbackLimitReachedAfterSubmit: 'Your feedback has been registered. You have now expressed your opinion about this name three times.',
     selectSentimentMessage: 'Please choose whether you like the name or not.',
     errorMessage: 'An error has occurred. Try again later.'
   };

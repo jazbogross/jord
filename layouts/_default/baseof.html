@@ -16,6 +16,6 @@
 </body>
 
 {{ $javascript := resources.Get "js/main.js" | resources.Minify }}
-<script src="{{- $javascript.Permalink -}}"></script>
+<script src="{{- $javascript.RelPermalink -}}"></script>
 
 </html>

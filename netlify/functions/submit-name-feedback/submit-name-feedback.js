@@ -1,6 +1,7 @@
 const fetch = require("node-fetch");
 
-const jsonURL = "https://api.github.com/repos/jazbogross/jord/contents/static/name-feedback.json";
+const feedbackJsonURL = "https://api.github.com/repos/jazbogross/jord/contents/static/name-feedback.json";
+const namesJsonURL = "https://api.github.com/repos/jazbogross/jord/contents/static/names.json";
 const secretKey = process.env.CAPTCHA_SECRET_KEY;
 
 exports.handler = async function(event) {
@@ -35,15 +36,12 @@ exports.handler = async function(event) {
       };
     }
 
-    const repoContentResponse = await fetch(jsonURL, {
-      headers: {
-        Authorization: `token ${githubToken}`
-      }
-    });
-    const repoContentData = await repoContentResponse.json();
-    const existingFeedbackBase64 = repoContentData.content;
-    const existingFeedbackStr = Buffer.from(existingFeedbackBase64, "base64").toString("utf-8");
-    const feedbackByName = JSON.parse(existingFeedbackStr);
+    const [feedbackRepoFile, namesRepoFile] = await Promise.all([
+      fetchRepoJsonFile(feedbackJsonURL, githubToken),
+      fetchRepoJsonFile(namesJsonURL, githubToken)
+    ]);
+    const feedbackByName = feedbackRepoFile.data;
+    const names = namesRepoFile.data;
 
     const now = new Date();
     const timezoneOffsetMinutes = now.getTimezoneOffset();
@@ -79,19 +77,24 @@ exports.handler = async function(event) {
       }
     }
 
-    const updatedFeedbackBase64 = Buffer.from(JSON.stringify(feedbackByName), "utf-8").toString("base64");
+    touchGardenNameRecord(names, submittedName, localTimestamp);
 
-    await fetch(jsonURL, {
-      method: "PUT",
-      headers: {
-        Authorization: `token ${githubToken}`
-      },
-      body: JSON.stringify({
-        message: "Garden name feedback added [skip netlify]",
-        content: updatedFeedbackBase64,
-        sha: repoContentData.sha
-      })
-    });
+    await Promise.all([
+      updateRepoJsonFile(
+        feedbackJsonURL,
+        githubToken,
+        feedbackRepoFile.sha,
+        feedbackByName,
+        "Garden name feedback added [skip netlify]"
+      ),
+      updateRepoJsonFile(
+        namesJsonURL,
+        githubToken,
+        namesRepoFile.sha,
+        names,
+        "Garden name metadata updated [skip netlify]"
+      )
+    ]);
 
     return {
       statusCode: 200,
@@ -112,4 +115,78 @@ function normalizeSpacing(value) {
 
 function normalizeText(value) {
   return normalizeSpacing(value).toLowerCase();
+}
+
+function touchGardenNameRecord(names, submittedName, timestamp) {
+  const nameKey = normalizeText(submittedName);
+  let existingName = names.find((item) => normalizeText(item.name) === nameKey);
+
+  if (!existingName) {
+    existingName = {
+      name: submittedName,
+      color: generateDeterministicHexColor(submittedName),
+      date: timestamp,
+      lastUpdated: timestamp
+    };
+    names.push(existingName);
+    return existingName;
+  }
+
+  existingName.name = existingName.name || submittedName;
+  existingName.date = existingName.date || timestamp;
+  existingName.lastUpdated = timestamp;
+  delete existingName.updated;
+  delete existingName.fontSize;
+
+  return existingName;
+}
+
+async function fetchRepoJsonFile(url, githubToken) {
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `token ${githubToken}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub fetch failed for ${url}: ${response.status}`);
+  }
+
+  const repoContentData = await response.json();
+  const content = Buffer.from(repoContentData.content, "base64").toString("utf-8");
+
+  return {
+    sha: repoContentData.sha,
+    data: JSON.parse(content)
+  };
+}
+
+async function updateRepoJsonFile(url, githubToken, sha, data, message) {
+  const encodedContent = Buffer.from(JSON.stringify(data), "utf-8").toString("base64");
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      Authorization: `token ${githubToken}`
+    },
+    body: JSON.stringify({
+      message,
+      content: encodedContent,
+      sha
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub update failed for ${url}: ${response.status}`);
+  }
+}
+
+function generateDeterministicHexColor(value) {
+  const normalizedValue = normalizeText(value);
+  let hash = 0;
+
+  for (let index = 0; index < normalizedValue.length; index += 1) {
+    hash = (hash * 31 + normalizedValue.charCodeAt(index)) >>> 0;
+  }
+
+  return `#${(hash & 0xffffff).toString(16).padStart(6, "0")}`;
 }

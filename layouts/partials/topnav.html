@@ -29,7 +29,7 @@
   scene.add(directionalLight);
 
       const loader = new STLLoader();
-loader.load('lillehaand.stl', (geometry) => {
+loader.load('/lillehaand.stl', (geometry) => {
 
       // Compute vertex normals for proper shading
       geometry.computeVertexNormals();

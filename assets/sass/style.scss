@@ -216,6 +216,18 @@ button:hover,
   color: white;
 }
 
+button:disabled,
+.actionButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button:disabled:hover,
+.actionButton:disabled:hover {
+  background-color: white;
+  color: black;
+}
+
 #actionButtons {
   position: fixed;
   top: 24px;
@@ -293,11 +305,16 @@ button:hover,
 
 .sentimentButton:disabled {
   opacity: 0.55;
-  cursor: wait;
+  cursor: not-allowed;
 }
 
 .nameFeedbackCommentWrap {
   width: 100%;
+}
+
+#nameFeedbackList {
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 #nameFeedbackComment {
@@ -319,6 +336,11 @@ button:hover,
 
 #nameFeedbackComment:focus {
   outline: none;
+}
+
+#nameFeedbackComment:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 #nameFeedbackStatus {

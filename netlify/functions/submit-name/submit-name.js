@@ -53,18 +53,15 @@ exports.handler = async function(event) {
     const existingName = names.find((item) => normalizeText(item.name) === normalizedName);
 
     if (existingName) {
-      existingName.fontSize += 1;
-      if (!Array.isArray(existingName.updated)) {
-        existingName.updated = [];
-      }
-      existingName.updated.push(localTimestamp);
+      existingName.lastUpdated = localTimestamp;
+      delete existingName.updated;
+      delete existingName.fontSize;
     } else {
       names.push({
         name: submittedName,
-        fontSize: 20,
         color: generateRandomHexColor(),
         date: localTimestamp,
-        updated: [localTimestamp]
+        lastUpdated: localTimestamp
       });
     }
 
