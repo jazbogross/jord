@@ -227,7 +227,9 @@ function createMatrixItem(item) {
     span.style.fontSize = `${(item.fontSize || 20) * 2}px`;
     span.appendChild(img);
   } else {
-    span.textContent = item.type === 'word' ? capitalizeFirstLetter(item.word) : item.name;
+    span.textContent = item.type === 'word'
+      ? capitalizeFirstLetter(item.word)
+      : formatGardenNameForDisplay(item.name);
   }
 
   if (item.type === 'name') {
@@ -571,7 +573,7 @@ async function openNameFeedbackDialog(nameItem) {
   }
 
   elements.feedbackName.value = nameItem.name;
-  elements.nameFeedbackTitle.textContent = nameItem.name;
+  elements.nameFeedbackTitle.textContent = formatGardenNameForDisplay(nameItem.name);
   elements.nameFeedbackStatus.textContent = '';
   setNameFeedbackButtonsDisabled(false);
   resetTextareaHeight(elements.nameFeedbackComment);
@@ -736,7 +738,7 @@ async function submitName(event) {
     return;
   }
 
-  const flyingCopy = createFlyingCopy(elements.nameInput, value);
+  const flyingCopy = createFlyingCopy(elements.nameInput, formatGardenNameForDisplay(value));
   closeNameForm();
   flyElementAround(flyingCopy, getCopy().nameSubmissionMessage);
 
@@ -1150,6 +1152,24 @@ function normalizeText(value) {
 
 function normalizeSpacing(value) {
   return String(value || '').trim().replace(/\s+/g, ' ');
+}
+
+function formatGardenNameForDisplay(value) {
+  const normalizedValue = normalizeSpacing(value);
+  if (!normalizedValue) {
+    return '';
+  }
+
+  return normalizedValue
+    .split(/(\s+|-|'|\/)/)
+    .map((part) => {
+      if (!part || /^(\s+|-|'|\/)$/.test(part)) {
+        return part;
+      }
+
+      return capitalizeFirstLetter(part.toLocaleLowerCase());
+    })
+    .join('');
 }
 
 function capitalizeFirstLetter(value) {

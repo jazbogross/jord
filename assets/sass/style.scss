@@ -44,6 +44,9 @@ body {
     max-width: 100%;
     line-height: 1.1;
     white-space: normal;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.03em;
     will-change: transform;
   }
 }
@@ -180,6 +183,11 @@ body {
 #nameFeedbackTitle {
   margin: 0 0 16px;
   text-align: center;
+}
+
+#nameFeedbackTitle {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 700;
 }
 
 #introText {
