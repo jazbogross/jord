@@ -44,10 +44,13 @@ body {
     max-width: 100%;
     line-height: 1.1;
     white-space: normal;
-    animation: nameDrift var(--drift-duration, 18s) ease-in-out infinite alternate;
-    animation-delay: var(--drift-delay, 0s);
     will-change: transform;
   }
+}
+
+.word.garden-name span.is-drifting {
+  animation: nameDrift var(--drift-duration, 18s) ease-in-out infinite alternate;
+  animation-delay: var(--drift-delay, 0s);
 }
 
 .comments-div {

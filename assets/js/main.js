@@ -18,6 +18,7 @@ const state = {
 
 let elements = {};
 let gardenScrollObserver = null;
+let gardenNameMotionObserver = null;
 let isGardenScrollFallbackBound = false;
 
 document.addEventListener('DOMContentLoaded', init);
@@ -197,6 +198,7 @@ async function loadGardenContent() {
 function renderGarden() {
   elements.container.innerHTML = '';
   disconnectGardenInfiniteScroll();
+  disconnectGardenNameMotionObserver();
   elements.scrollSentinel = null;
 
   appendGardenBatch();
@@ -229,7 +231,7 @@ function createMatrixItem(item) {
   }
 
   if (item.type === 'name') {
-    span.style.color = item.color || '#4f7c47';
+    span.style.color = getGardenNameColor(item);
     decorateGardenNameMotion(span);
     span.addEventListener('click', () => openNameFeedbackDialog(item));
   } else {
@@ -237,6 +239,10 @@ function createMatrixItem(item) {
   }
 
   wrapper.appendChild(span);
+
+  if (item.type === 'name') {
+    registerGardenNameMotion(span);
+  }
 
   return wrapper;
 }
@@ -332,6 +338,44 @@ function disconnectGardenInfiniteScroll() {
     gardenScrollObserver.disconnect();
     gardenScrollObserver = null;
   }
+}
+
+function ensureGardenNameMotionObserver() {
+  if (gardenNameMotionObserver || !('IntersectionObserver' in window)) {
+    return;
+  }
+
+  gardenNameMotionObserver = new IntersectionObserver(handleGardenNameMotionIntersection, {
+    root: null,
+    threshold: 0.01
+  });
+}
+
+function disconnectGardenNameMotionObserver() {
+  if (gardenNameMotionObserver) {
+    gardenNameMotionObserver.disconnect();
+    gardenNameMotionObserver = null;
+  }
+}
+
+function registerGardenNameMotion(element) {
+  if (!element) {
+    return;
+  }
+
+  if (!('IntersectionObserver' in window)) {
+    element.classList.add('is-drifting');
+    return;
+  }
+
+  ensureGardenNameMotionObserver();
+  gardenNameMotionObserver.observe(element);
+}
+
+function handleGardenNameMotionIntersection(entries) {
+  entries.forEach((entry) => {
+    entry.target.classList.toggle('is-drifting', entry.isIntersecting);
+  });
 }
 
 function handleGardenScrollIntersection(entries) {
@@ -1007,6 +1051,25 @@ function combineNameFeedbackComments(feedback) {
 
 function getBrowserLanguage() {
   return navigator.language || navigator.userLanguage || '';
+}
+
+function getGardenNameColor(item) {
+  if (item.color) {
+    return item.color;
+  }
+
+  const name = item.name || '';
+  let hash = 0;
+
+  for (let index = 0; index < name.length; index += 1) {
+    hash = (hash * 31 + name.charCodeAt(index)) >>> 0;
+  }
+
+  const hue = hash % 360;
+  const saturation = 44 + (hash % 18);
+  const lightness = 36 + (hash % 12);
+
+  return `hsl(${hue}deg ${saturation}% ${lightness}%)`;
 }
 
 function getCopy() {
