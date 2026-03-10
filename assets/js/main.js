@@ -61,6 +61,8 @@ function init() {
     nameFeedbackColumnsTitle: document.getElementById('nameFeedbackColumnsTitle'),
     nameFeedbackColumns: document.getElementById('nameFeedbackColumns'),
     nameFeedbackList: document.getElementById('nameFeedbackList'),
+    nameFeedbackPositiveButton: document.querySelector('.sentimentButton[data-sentiment="positive"]'),
+    nameFeedbackNegativeButton: document.querySelector('.sentimentButton[data-sentiment="negative"]'),
     sentimentButtons: Array.from(document.querySelectorAll('.sentimentButton'))
   };
 
@@ -124,6 +126,14 @@ function applyCopy() {
 
   if (elements.nameFeedbackColumnsTitle) {
     elements.nameFeedbackColumnsTitle.textContent = copy.nameFeedbackColumnsTitle;
+  }
+
+  if (elements.nameFeedbackPositiveButton) {
+    elements.nameFeedbackPositiveButton.textContent = copy.nameFeedbackPositiveButton;
+  }
+
+  if (elements.nameFeedbackNegativeButton) {
+    elements.nameFeedbackNegativeButton.textContent = copy.nameFeedbackNegativeButton;
   }
 }
 
@@ -1299,6 +1309,8 @@ function getCopy() {
       nameCommentPlaceholder: 'Tilføj en kommentar hvis du vil...',
       nameFeedbackPrompt: 'Kan du lide navnet?',
       nameFeedbackColumnsTitle: 'Se kommentarer',
+      nameFeedbackPositiveButton: 'JEG KAN GODT LIDE NAVNET',
+      nameFeedbackNegativeButton: 'JEG KAN IKKE LIDE NAVNET',
       noNameFeedbackComments: 'Der er endnu ingen kommentarer til dette navn.',
       positiveCommentsTitle: 'Positive kommentarer',
       negativeCommentsTitle: 'Negative kommentarer',
@@ -1331,6 +1343,8 @@ function getCopy() {
     nameCommentPlaceholder: 'Write an optional comment...',
     nameFeedbackPrompt: 'How does this name sound to you?',
     nameFeedbackColumnsTitle: 'View comments',
+    nameFeedbackPositiveButton: 'I LIKE THIS NAME',
+    nameFeedbackNegativeButton: "I DON'T LIKE THIS NAME",
     noNameFeedbackComments: 'There are no comments for this name yet.',
     positiveCommentsTitle: 'Positive comments',
     negativeCommentsTitle: 'Negative comments',
