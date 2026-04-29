@@ -1,5 +1,6 @@
 body {
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   overflow-x: hidden;
   font-family: 'Times New Roman', Times, serif;
@@ -121,6 +122,8 @@ body {
   -webkit-backdrop-filter: blur(15px);
   opacity: 1;
   transition: opacity 0.7s ease;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   z-index: 1200;
 }
 
@@ -138,6 +141,9 @@ body {
   position: relative;
   width: 100%;
   max-width: 720px;
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
   padding: 36px;
   border: 1px solid black;
   background-color: rgba(255, 255, 255, 0.6);
@@ -468,11 +474,23 @@ audio {
   .overlayPanel,
   #wordForm,
   #nameForm {
-    padding: 24px;
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
+    padding: 24px 20px;
   }
 
   .introPanel {
     text-align: center;
+  }
+
+  #introTitle,
+  #nameFeedbackTitle {
+    margin-bottom: 12px;
+  }
+
+  #introText {
+    margin: 0 0 24px;
+    font-size: 18px;
   }
 
   #wordForm input,
@@ -482,5 +500,36 @@ audio {
 
   .nameFeedbackColumns {
     max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .overlayContainer {
+    align-items: flex-start;
+    padding: 16px;
+    padding-top: calc(16px + env(safe-area-inset-top));
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .overlayPanel,
+  #wordForm,
+  #nameForm {
+    max-height: none;
+    margin: auto 0;
+    padding: 20px 16px;
+  }
+
+  #introTitle,
+  #nameFeedbackTitle {
+    font-size: 30px;
+  }
+
+  #introText {
+    font-size: 17px;
+    line-height: 1.4;
+  }
+
+  #enterGarden button {
+    width: 100%;
   }
 }
