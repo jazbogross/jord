@@ -9,6 +9,18 @@
 
 <body class="{{ if .IsHome }}publication-page{{ else if eq .Section "garden" }}garden-archive-page{{ end }}">
 
+  {{ if .IsHome }}
+  <div class="publicationTexture" data-publication-texture aria-hidden="true">
+    <img
+      class="publicationTextureImage"
+      data-publication-texture-image
+      src="/images/publication-texture.jpg"
+      alt=""
+      decoding="async"
+      fetchpriority="high">
+  </div>
+  {{ end }}
+
   {{ block "topnav" . }}{{end}}
 
   {{ block "main" . }}{{end}}

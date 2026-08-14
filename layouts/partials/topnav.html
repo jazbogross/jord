@@ -2,9 +2,8 @@
 
 {{ if eq .Section "garden" }}
 <a href="https://naarduikkeerher.dk/roennebaeksholm" aria-label="Rønnebæksholm"><div id="stldiv"></div></a>
-<nav id="actionButtons" aria-label="Garden archive navigation">
-  <a href="/" class="actionButton">Publication</a>
-  <span class="actionButton archiveBadge" aria-current="page">Garden archive</span>
+<nav id="publicationNav" class="pageSwitchNav" aria-label="Garden archive navigation">
+  <a href="/" class="pageSwitchButton">Publication</a>
 </nav>
 
 <script type="module">
@@ -81,8 +80,8 @@ loader.load('/lillehaand.stl', (geometry) => {
 
 </script>
 {{ else if .IsHome }}
-<nav id="publicationNav" aria-label="Publication navigation">
-  <a href="/garden/">Garden archive</a>
+<nav id="publicationNav" class="pageSwitchNav" aria-label="Publication navigation">
+  <a href="/garden/" class="pageSwitchButton">Garden archive</a>
 </nav>
 {{ end }}
 

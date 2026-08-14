@@ -4,15 +4,46 @@ test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
 });
 
+test('shows only the publication navigation in the garden archive', async ({ page }) => {
+  await page.goto('/');
+  const publicationButtonBox = await page.getByRole('link', { name: 'Garden archive' }).boundingBox();
+
+  await page.goto('/garden/');
+  await page.getByRole('button', { name: 'ENTER' }).click();
+
+  const archiveNavigation = page.getByRole('navigation', { name: 'Garden archive navigation' });
+  const publicationButton = archiveNavigation.getByRole('link', { name: 'Publication' });
+  await expect(publicationButton).toBeVisible();
+  await expect(archiveNavigation.getByText('Garden archive')).toHaveCount(0);
+  await expect(archiveNavigation.locator('.pageSwitchButton')).toHaveCount(1);
+  expect(await publicationButton.boundingBox()).toEqual(publicationButtonBox);
+
+  await page.goto('/');
+  const gardenArchiveButton = page.getByRole('link', { name: 'Garden archive' });
+  await expect(gardenArchiveButton).toHaveCSS('white-space', 'nowrap');
+  const gardenArchiveLineCount = await gardenArchiveButton.evaluate((element) => {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const lineCount = range.getClientRects().length;
+    range.detach();
+    return lineCount;
+  });
+  expect(gardenArchiveLineCount).toBe(1);
+});
+
 test('lists the nine real publication texts without placeholders', async ({ page }) => {
   await page.goto('/');
 
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(251, 250, 246)');
+  await expect(page.locator('.publicationTexture')).toHaveClass(/is-loaded/);
+  await expect(page.locator('.publicationTexture')).toHaveCSS('opacity', '0.3');
+  await expect(page.locator('.publicationTextureImage')).toHaveCSS('object-fit', 'cover');
   await expect(page.locator('[data-publication-link]')).toHaveCount(9);
   await expect(page.locator('.publicationIntro')).toBeVisible();
   await expect(page.locator('.publicationIntro')).toHaveCSS('font-family', /jost/i);
   await expect(page.locator('.publicationStickyTitle')).toHaveCount(0);
   await expect(page.locator('.publicationIndexMeta').first()).toHaveCSS('font-family', /jost/i);
-  await expect(page.getByRole('button', { name: 'OVERSIGT' })).toHaveCSS('font-family', /jost/i);
+  await expect(page.getByRole('button', { name: 'UDSIGT' })).toHaveCSS('font-family', /jost/i);
   await expect(page.locator('.publicationHeader h1')).toHaveCSS('font-family', /abc synt/i);
   await expect(page.locator('.publicationIndexTitle').first()).toHaveCSS('font-family', /abc synt/i);
   const indexTitleSize = await page.locator('.publicationIndexTitle').first().evaluate((element) => (
@@ -26,6 +57,26 @@ test('lists the nine real publication texts without placeholders', async ({ page
   await expect(page.locator('body')).not.toContainText('Lorem ipsum');
 });
 
+test('reshuffles the publication texts on every reload', async ({ page }) => {
+  await page.goto('/');
+  const firstOrder = await page.locator('[data-publication-link]').evaluateAll((links) => (
+    links.map((link) => link.dataset.publicationLink)
+  ));
+
+  await page.reload();
+  const secondOrder = await page.locator('[data-publication-link]').evaluateAll((links) => (
+    links.map((link) => link.dataset.publicationLink)
+  ));
+
+  expect(secondOrder).not.toEqual(firstOrder);
+  expect(secondOrder.slice().sort()).toEqual(firstOrder.slice().sort());
+
+  const articleOrder = await page.locator('[data-publication-text]').evaluateAll((texts) => (
+    texts.map((text) => text.dataset.publicationText)
+  ));
+  expect(articleOrder).toEqual(secondOrder);
+});
+
 test('renders genre-specific reading structures', async ({ page }) => {
   await page.goto('/#guldsmedens-ly');
 
@@ -34,7 +85,7 @@ test('renders genre-specific reading structures', async ({ page }) => {
   await expect(page.locator('.publicationHeader')).toBeHidden();
   await expect(page.locator('.publicationIntro')).toBeHidden();
   await expect(page.locator('.publicationIndexList')).toBeHidden();
-  await expect(page.getByRole('button', { name: 'OVERSIGT' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'UDSIGT' })).toBeVisible();
   await expect(drama.locator('.publicationTextMeta')).toHaveCount(0);
   await expect(drama.getByRole('heading', { name: 'Karakterer' })).toBeVisible();
   await expect(drama.getByRole('heading', { name: 'Karakterer' })).toHaveCSS('font-family', /jost/i);
@@ -48,8 +99,20 @@ test('renders genre-specific reading structures', async ({ page }) => {
   await expect(annotatedSpeaker.locator('.dramaSpeakerName')).not.toContainText('(');
   await expect(annotatedSpeaker.locator('.dramaSpeakerNote')).toContainText('(');
   await expect(annotatedSpeaker.locator('.dramaSpeakerNote')).toHaveCSS('visibility', 'hidden');
+  await expect(annotatedSpeaker.locator('.dramaSpeakerName')).toHaveCSS('border-bottom-width', '0px');
+  const desktopMoodIndicator = await annotatedSpeaker.locator('.dramaSpeakerName').evaluate((element) => (
+    window.getComputedStyle(element, '::after').content
+  ));
+  expect(desktopMoodIndicator).toBe('"()"');
   await annotatedSpeaker.hover();
   await expect(annotatedSpeaker.locator('.dramaSpeakerNote')).toHaveCSS('visibility', 'visible');
+  await expect(annotatedSpeaker.locator('.dramaSpeakerNote')).toHaveCSS('border-top', '1px solid rgb(0, 0, 0)');
+  await expect(annotatedSpeaker.locator('.dramaSpeakerNote')).toHaveCSS('background-color', 'rgb(251, 250, 246)');
+  await expect(annotatedSpeaker.locator('.dramaSpeakerNote')).toHaveCSS('background-image', 'none');
+
+  const shortMoodNote = drama.getByText('(til guldsmeden)', { exact: true });
+  const shortMoodNoteWidth = await shortMoodNote.evaluate((element) => element.getBoundingClientRect().width);
+  expect(shortMoodNoteWidth).toBeLessThan(384);
 
   const characterTypeSizes = await drama.evaluate((article) => ({
     heading: window.getComputedStyle(article.querySelector('.dramaCharacters h3')).fontSize,
@@ -84,6 +147,11 @@ test('renders genre-specific reading structures', async ({ page }) => {
   await expect(drama.locator('.dramaDialogue').first()).toHaveCSS('display', 'block');
   await expect(annotatedSpeaker.locator('.dramaSpeakerNote')).toHaveCSS('position', 'static');
   await expect(annotatedSpeaker.locator('.dramaSpeakerNote')).toHaveCSS('visibility', 'visible');
+  await expect(annotatedSpeaker.locator('.dramaSpeakerName')).toHaveCSS('border-bottom-width', '0px');
+  const mobileMoodIndicator = await annotatedSpeaker.locator('.dramaSpeakerName').evaluate((element) => (
+    window.getComputedStyle(element, '::after').display
+  ));
+  expect(mobileMoodIndicator).toBe('none');
   await expect(drama.locator('.dramaCharacters li')).toHaveCount(3);
 
   const characterStyles = await drama.locator('.dramaCharacters').evaluate((element) => {
@@ -100,7 +168,7 @@ test('renders genre-specific reading structures', async ({ page }) => {
     listDisplay: 'block',
   });
 
-  await page.getByRole('button', { name: 'OVERSIGT' }).click();
+  await page.getByRole('button', { name: 'UDSIGT' }).click();
   await expect(page.locator('.publicationIndexList')).toBeVisible();
   await expect(drama).toBeHidden();
 

@@ -13,6 +13,7 @@ const PUBLICATION_RAIN_OUT_DURATION_MS = 1600;
 const PUBLICATION_RAIN_IN_DURATION_MS = 1900;
 const PUBLICATION_RULE_WIPE_DURATION_MS = 420;
 const PUBLICATION_RAIN_MAX_STAGGER_MS = 650;
+const PUBLICATION_INDEX_ORDER_SESSION_KEY = 'jord_publication_index_order';
 
 const state = {
   isDanish: true,
@@ -39,6 +40,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 function init() {
   state.isDanish = getBrowserLanguage().includes('da');
+  initPublicationTexture();
   initPublication();
 
   elements = {
@@ -86,6 +88,51 @@ function init() {
   applyCopy();
   bindUi();
   loadGardenContent();
+}
+
+function initPublicationTexture() {
+  const texture = document.querySelector('[data-publication-texture]');
+  const image = texture?.querySelector('[data-publication-texture-image]');
+  if (!texture || !image) {
+    return;
+  }
+
+  observePublicationTextureLoad(image).then((didLoad) => {
+    if (!didLoad) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => texture.classList.add('is-loaded'));
+    });
+  });
+}
+
+async function observePublicationTextureLoad(image) {
+  if (!image.complete) {
+    const didLoad = await new Promise((resolve) => {
+      image.addEventListener('load', () => resolve(true), { once: true });
+      image.addEventListener('error', () => resolve(false), { once: true });
+    });
+
+    if (!didLoad) {
+      return false;
+    }
+  }
+
+  if (!image.naturalWidth) {
+    return false;
+  }
+
+  if (typeof image.decode === 'function') {
+    try {
+      await image.decode();
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function applyCopy() {
@@ -218,6 +265,10 @@ function initPublication() {
   const indexTrigger = root.querySelector('[data-publication-index-trigger]');
   const indexHeading = root.querySelector('.publicationIndexHeading');
   const indexList = root.querySelector('.publicationIndexList');
+  const reader = root.querySelector('.publicationReader');
+
+  shufflePublicationTexts(indexList, reader);
+
   const links = Array.from(root.querySelectorAll('[data-publication-link]'));
   const texts = Array.from(root.querySelectorAll('[data-publication-text]'));
 
@@ -258,6 +309,88 @@ function initPublication() {
     clearActivePublicationText();
   }
 
+}
+
+function shufflePublicationTexts(indexList, reader) {
+  if (!indexList || !reader) {
+    return;
+  }
+
+  const items = Array.from(indexList.children);
+  if (items.length < 2) {
+    return;
+  }
+
+  const originalOrder = getPublicationIndexOrder(items);
+  const previousOrder = getPreviousPublicationIndexOrder();
+  let shuffledItems = items.slice();
+  let shuffledOrder = originalOrder;
+
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    shuffledItems = fisherYatesShuffle(items.slice());
+    shuffledOrder = getPublicationIndexOrder(shuffledItems);
+    if (shuffledOrder !== originalOrder && shuffledOrder !== previousOrder) {
+      break;
+    }
+  }
+
+  if (shuffledOrder === originalOrder || shuffledOrder === previousOrder) {
+    for (let offset = 1; offset < items.length; offset += 1) {
+      const rotatedItems = items.slice(offset).concat(items.slice(0, offset));
+      const rotatedOrder = getPublicationIndexOrder(rotatedItems);
+      if (rotatedOrder !== originalOrder && rotatedOrder !== previousOrder) {
+        shuffledItems = rotatedItems;
+        shuffledOrder = rotatedOrder;
+        break;
+      }
+    }
+  }
+
+  shuffledItems.forEach((item) => indexList.appendChild(item));
+
+  const textsBySlug = new Map(
+    Array.from(reader.querySelectorAll('[data-publication-text]')).map((text) => [
+      text.dataset.publicationText,
+      text
+    ])
+  );
+
+  shuffledItems.forEach((item) => {
+    const slug = item.querySelector('[data-publication-link]')?.dataset.publicationLink;
+    const text = textsBySlug.get(slug);
+    if (text) {
+      reader.appendChild(text);
+    }
+  });
+
+  try {
+    window.sessionStorage.setItem(PUBLICATION_INDEX_ORDER_SESSION_KEY, shuffledOrder);
+  } catch (_error) {
+    // The shuffle still works when browser storage is unavailable.
+  }
+}
+
+function fisherYatesShuffle(items) {
+  for (let index = items.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [items[index], items[randomIndex]] = [items[randomIndex], items[index]];
+  }
+
+  return items;
+}
+
+function getPublicationIndexOrder(items) {
+  return items
+    .map((item) => item.querySelector('[data-publication-link]')?.dataset.publicationLink || '')
+    .join('|');
+}
+
+function getPreviousPublicationIndexOrder() {
+  try {
+    return window.sessionStorage.getItem(PUBLICATION_INDEX_ORDER_SESSION_KEY) || '';
+  } catch (_error) {
+    return '';
+  }
 }
 
 function handlePublicationLinkClick(event) {
