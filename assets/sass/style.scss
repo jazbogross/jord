@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'ABC Synt';
+  src: url('/fonts/ABCSynt-Regular.otf') format('opentype');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 body {
   min-height: 100vh;
   min-height: 100dvh;
@@ -531,5 +539,773 @@ audio {
 
   #enterGarden button {
     width: 100%;
+  }
+}
+
+body.publication-page {
+  min-height: 100vh;
+  background: #fbfaf6;
+  color: #111;
+  overflow-x: hidden;
+  font-family: 'Jost', Arial, Helvetica, sans-serif;
+  font-weight: 400;
+}
+
+body.publication-page button,
+body.publication-page input,
+body.publication-page select,
+body.publication-page textarea {
+  font-family: inherit;
+}
+
+#publicationNav {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1000;
+  font-family: 'Jost', Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+
+  a {
+    display: inline-block;
+    padding: 10px 14px;
+    border: 1px solid black;
+    background-color: rgba(251, 250, 246, 0.62);
+    color: black;
+    text-decoration: none;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+  }
+
+  a:hover,
+  a:focus-visible {
+    background-color: black;
+    color: white;
+  }
+}
+
+.publication {
+  width: calc(100vw - 48px);
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 112px 0 96px;
+}
+
+.publicationHeader {
+  max-width: 760px;
+  margin-bottom: 72px;
+
+  h1 {
+    margin: 0;
+    font-family: 'ABC Synt', Arial, Helvetica, sans-serif;
+    font-size: clamp(44px, 8vw, 112px);
+    font-weight: 400;
+    line-height: 0.94;
+    letter-spacing: -0.055em;
+  }
+}
+
+.publicationEyebrow,
+.publicationIntro,
+.publicationIndexHeading,
+.publicationEmpty,
+.defaultList {
+  font-family: 'Jost', Arial, Helvetica, sans-serif;
+}
+
+.publicationEyebrow {
+  margin: 0 0 16px;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.publicationIntro {
+  max-width: 520px;
+  margin: 24px 0 0;
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.publicationIndex {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(120px, 0.3fr) minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  column-gap: 24px;
+  row-gap: 0;
+  margin-bottom: 0;
+
+  &::before {
+    content: '';
+    grid-column: 1 / -1;
+    grid-row: 2;
+    align-self: start;
+    height: 1px;
+    background-color: black;
+    opacity: 1;
+    transform: scaleX(1);
+    transform-origin: left center;
+    transition:
+      transform 420ms cubic-bezier(0.16, 0.84, 0.24, 1) 120ms,
+      opacity 420ms ease 120ms;
+  }
+
+  > .publicationIndexHeading {
+    margin: 0;
+    padding-top: 18px;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+}
+
+.publicationIndexList {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.publicationIndexItem {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(130px, 0.32fr);
+  gap: 24px;
+  padding: 18px 0;
+  color: black;
+  text-decoration: none;
+
+  &:focus-visible {
+    outline: 1px solid black;
+    outline-offset: 4px;
+  }
+}
+
+.publicationIndexTitle {
+  font-family: 'ABC Synt', Arial, Helvetica, sans-serif;
+  font-size: clamp(24px, 4vw, 52px);
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+}
+
+.publicationIndexMeta {
+  align-self: end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-family: 'Jost', Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  line-height: 1.25;
+  text-align: right;
+}
+
+.publicationIndexCredit,
+.publicationIndexGenre {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.publicationIndexCredit {
+  max-width: 220px;
+}
+
+.publicationIndexItem::before,
+.publicationIndexList::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background-color: black;
+  opacity: 1;
+  transform: scaleX(1);
+  transform-origin: left center;
+  transition:
+    transform 420ms cubic-bezier(0.16, 0.84, 0.24, 1) 120ms,
+    opacity 420ms ease 120ms;
+}
+
+.publicationIndexItem::before {
+  top: 0;
+}
+
+.publicationIndexList li:first-child .publicationIndexItem::before {
+  display: none;
+}
+
+
+.publicationIndexList::after {
+  bottom: 0;
+}
+
+.publication.is-wiping-rules .publicationIndex::before,
+.publication.is-wiping-rules .publicationIndexItem::before,
+.publication.is-wiping-rules .publicationIndexList::after {
+  opacity: 0;
+  transform: scaleX(0);
+  transition-delay: 0ms;
+  transition-duration: 420ms;
+}
+
+
+.publicationReader {
+  grid-column: 2;
+  grid-row: 3;
+  min-height: 45vh;
+  margin-top: 96px;
+}
+
+.publication.has-active-text .publicationHeader,
+.publication.has-active-text .publicationIndexList,
+.publication.has-active-text .publicationIndex::before {
+  display: none;
+}
+
+.publication.has-active-text .publicationIndex {
+  grid-template-rows: auto;
+}
+
+.publication.has-active-text .publicationIndexHeading,
+.publication.has-active-text .publicationReader {
+  grid-row: 1;
+}
+
+.publication.has-active-text .publicationReader {
+  margin-top: 0;
+}
+
+.publication:not(.has-active-text) .publicationReader {
+  display: none;
+}
+
+.publicationText {
+  display: none;
+  max-width: 760px;
+  margin-left: 0;
+  scroll-margin-top: 72px;
+
+  &:focus {
+    outline: none;
+  }
+
+  &.is-active,
+  &.is-preparing {
+    display: block;
+  }
+
+  &.is-preparing {
+    visibility: hidden;
+  }
+
+}
+
+.publicationTextHeader {
+  margin-bottom: 40px;
+
+  h2 {
+    margin: 0;
+    font-family: 'ABC Synt', Arial, Helvetica, sans-serif;
+    font-size: clamp(42px, 7vw, 92px);
+    font-weight: 400;
+    line-height: 0.96;
+    letter-spacing: -0.05em;
+  }
+}
+
+.publicationTextBody {
+  font-size: clamp(22px, 3vw, 34px);
+  line-height: 1.18;
+
+  p,
+  ul,
+  ol,
+  blockquote {
+    margin: 0 0 1.05em;
+  }
+
+  a {
+    color: inherit;
+    text-decoration-thickness: 0.05em;
+    text-underline-offset: 0.12em;
+  }
+}
+
+.genre-essay .publicationTextBody {
+  max-width: 46rem;
+  font-size: clamp(19px, 2vw, 25px);
+  line-height: 1.5;
+
+  h3,
+  h4 {
+    margin: 2.2em 0 0.7em;
+    font-family: 'Jost', Arial, Helvetica, sans-serif;
+    font-size: 0.72em;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    line-height: 1.25;
+    text-transform: uppercase;
+  }
+
+  blockquote {
+    margin: 1.8em 0;
+    padding: 0 0 0 1.25em;
+    border-left: 1px solid black;
+    font-size: 0.9em;
+    transition: border-left-color 620ms ease;
+  }
+}
+
+.genre-poem .publicationTextBody {
+  max-width: 44rem;
+  font-size: clamp(19px, 2.2vw, 27px);
+  line-height: 1.5;
+
+  p {
+    margin-bottom: 2em;
+  }
+}
+
+.dramaCharacters {
+  margin: 0 0 40px;
+  padding: 0 0 18px;
+  border-bottom: 1px solid black;
+  font-family: 'Jost', Arial, Helvetica, sans-serif;
+  font-size: clamp(18px, 1.9vw, 24px);
+  line-height: 1.48;
+  transition: border-bottom-color 620ms ease;
+
+  h3 {
+    margin: 0 0 14px;
+    font-size: 0.78em;
+    font-weight: 400;
+    letter-spacing: 0.16em;
+    line-height: inherit;
+    text-transform: uppercase;
+  }
+
+  ul {
+    display: block;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  li + li {
+    margin-top: 4px;
+  }
+}
+
+.genre-drama .publicationTextBody {
+  max-width: 48rem;
+  font-size: clamp(18px, 1.9vw, 24px);
+  line-height: 1.48;
+
+  p {
+    margin-bottom: 1.15em;
+  }
+
+  p:has(> em:only-child) {
+    margin-top: 2em;
+    margin-bottom: 2em;
+  }
+
+  em {
+    font-size: 0.78em;
+  }
+
+  .dramaDialogue {
+    display: grid;
+    grid-template-columns: minmax(5.5em, 22%) minmax(0, 1fr);
+    column-gap: 0.75em;
+    align-items: start;
+  }
+
+  .dramaSpeaker {
+    position: relative;
+    font-family: 'Jost', Arial, Helvetica, sans-serif;
+    font-size: 0.78em;
+    font-style: normal;
+    letter-spacing: 0.035em;
+  }
+
+  .dramaSpeaker--annotated {
+    cursor: help;
+  }
+
+  .dramaSpeaker--annotated:focus-visible {
+    outline: 1px solid black;
+    outline-offset: 4px;
+  }
+
+  .dramaSpeakerName {
+    display: block;
+  }
+
+  .dramaSpeakerNote {
+    position: absolute;
+    top: calc(100% + 0.45em);
+    left: 0;
+    z-index: 10;
+    visibility: hidden;
+    width: 24rem;
+    max-width: 42vw;
+    padding: 10px 12px;
+    border: 1px solid black;
+    background: #fbfaf6;
+    font-size: 1em;
+    font-style: italic;
+    letter-spacing: 0;
+    line-height: 1.35;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-0.25em);
+    transition: opacity 140ms ease, transform 140ms ease, visibility 140ms ease;
+  }
+
+  .dramaSpeaker--annotated:hover .dramaSpeakerNote,
+  .dramaSpeaker--annotated:focus .dramaSpeakerNote {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .dramaSpeech {
+    min-width: 0;
+  }
+}
+
+.genre-conversation .publicationTextBody {
+  max-width: 46rem;
+  font-size: clamp(17px, 1.7vw, 21px);
+  line-height: 1.58;
+
+  p {
+    display: grid;
+    grid-template-columns: 5.6em minmax(0, 1fr);
+    column-gap: 0.75em;
+    align-items: start;
+    margin-bottom: 0.85em;
+  }
+
+  strong:first-child {
+    min-width: 0;
+    margin: 0;
+    font-family: 'Jost', Arial, Helvetica, sans-serif;
+    font-size: 0.68em;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    vertical-align: 0.12em;
+  }
+}
+
+.footnotes {
+  margin-top: 4em;
+  padding-top: 1.4em;
+  border-top: 1px solid black;
+  font-family: 'Jost', Arial, Helvetica, sans-serif;
+  font-size: 0.58em;
+  line-height: 1.5;
+  transition: border-top-color 620ms ease;
+}
+
+.publicationEmpty,
+.defaultList {
+  max-width: 720px;
+  margin: 120px auto;
+  padding: 24px;
+  border: 1px solid black;
+  background-color: rgba(255, 255, 255, 0.45);
+}
+
+.publicationRainLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 2400;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 180ms ease;
+}
+
+.publicationRainLayer.is-fading {
+  opacity: 0;
+}
+
+.publicationRainWord {
+  position: fixed;
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform, opacity;
+  animation-delay: var(--rain-delay, 0ms);
+  animation-fill-mode: both;
+}
+
+.publicationRainWord.is-raining-out {
+  animation-name: publicationRainOut;
+  animation-duration: 1600ms;
+  animation-timing-function: cubic-bezier(0.55, 0, 0.78, 0.36);
+}
+
+.publicationRainWord.is-raining-in {
+  animation-name: publicationRainIn;
+  animation-duration: 1900ms;
+  animation-timing-function: cubic-bezier(0.16, 0.84, 0.24, 1);
+}
+
+.actionButton {
+  text-decoration: none;
+}
+
+.archiveBadge {
+  cursor: default;
+}
+
+.archiveBadge:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+  color: black;
+}
+
+.archiveDialogNote {
+  max-width: 480px;
+  margin: 0 auto 20px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+@keyframes publicationRainOut {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--rain-drift, 0), 112vh, 0) rotate(var(--rain-rotation, 10deg));
+  }
+}
+
+@keyframes publicationRainIn {
+  0% {
+    opacity: 0;
+    transform: translate3d(var(--rain-drift, 0), -112vh, 0) rotate(var(--rain-rotation, 10deg));
+  }
+
+  72% {
+    opacity: 1;
+  }
+
+  88% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .publicationRainLayer {
+    display: none;
+  }
+
+}
+
+@media (max-width: 760px) {
+  #publicationNav {
+    top: 16px;
+    right: 16px;
+  }
+
+  .publication {
+    width: calc(100vw - 32px);
+    max-width: 100%;
+    padding-top: 92px;
+  }
+
+  .publicationIndex {
+    display: block;
+    margin-bottom: 64px;
+  }
+
+  .publicationIndexHeading {
+    padding-bottom: 14px;
+  }
+
+  .publicationIndexItem {
+    display: block;
+  }
+
+  .publicationIndexAuthor {
+    display: block;
+    margin-top: 8px;
+    text-align: left;
+  }
+
+  .publicationIndexMeta {
+    align-items: flex-start;
+    margin-top: 8px;
+    text-align: left;
+  }
+
+  .publicationIndexCredit {
+    max-width: none;
+  }
+
+  .publicationText {
+    margin-left: 0;
+  }
+
+  .publicationReader {
+    margin-top: 64px;
+  }
+
+  .genre-drama .publicationTextBody .dramaDialogue {
+    display: block;
+  }
+
+  .genre-drama .publicationTextBody .dramaSpeaker,
+  .genre-drama .publicationTextBody .dramaSpeech {
+    display: block;
+  }
+
+  .genre-drama .publicationTextBody .dramaSpeaker {
+    margin-bottom: 0.45em;
+  }
+
+  .genre-drama .publicationTextBody .dramaSpeakerNote {
+    position: static;
+    visibility: visible;
+    width: auto;
+    margin-top: 0.2em;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+    transition: none;
+  }
+
+}
+
+.publicationIndexList {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.publicationIndexHeading {
+  position: sticky;
+  top: 24px;
+  z-index: 1001;
+  align-self: start;
+  grid-column: 1;
+  grid-row: 1;
+  margin: 0;
+  padding: 0 0 14px;
+}
+
+.publicationIndexHeading button {
+  all: unset;
+  display: inline-block;
+  color: black;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+
+.publicationIndexHeading button:focus-visible {
+  outline: 1px solid black;
+  outline-offset: 5px;
+}
+
+.publication.is-raining .publicationHeader,
+.publication.is-raining .publicationText.is-active,
+.publication.is-raining .publicationIndexHeading button,
+.publication.is-raining .publicationIndexItem span {
+  opacity: 0;
+}
+
+.publication.is-raining .publicationText.is-preparing {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.publicationText.is-preparing {
+  .publicationAudio {
+    opacity: 0;
+  }
+
+  .dramaCharacters {
+    border-bottom-color: transparent;
+  }
+
+  .footnotes {
+    border-top-color: transparent;
+  }
+
+  .genre-essay & blockquote {
+    border-left-color: transparent;
+  }
+}
+
+@media (max-width: 760px) {
+  .publicationIndexHeading {
+    position: static;
+    top: auto;
+    z-index: auto;
+  }
+}
+
+.publicationAudio {
+  margin: 1.2em 0;
+  padding: 18px 0;
+  font-family: 'Jost', Arial, Helvetica, sans-serif;
+  opacity: 1;
+  transition: opacity 620ms ease;
+}
+
+.publicationAudioTitle {
+  margin: 0 0 12px;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.publicationAudio audio {
+  display: block;
+  width: 100%;
+  height: 42px;
+  background-color: transparent;
+}
+
+.publicationAudioCaption {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+@media (max-width: 760px) {
+  .publicationIndexHeading {
+    top: 16px;
+    padding: 12px 0;
+  }
+
+  .publicationIndexList {
+    grid-column: auto;
   }
 }

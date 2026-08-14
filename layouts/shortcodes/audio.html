@@ -1,0 +1,17 @@
+{{- $src := .Get "src" | default (.Get 0) -}}
+{{- $title := .Get "title" | default (.Get 1) -}}
+{{- $caption := .Get "caption" | default (.Get 2) -}}
+{{- if not $src -}}
+  {{- errorf "audio shortcode requires a src parameter" -}}
+{{- end -}}
+<figure class="publicationAudio">
+  {{- with $title -}}
+    <figcaption class="publicationAudioTitle">{{ . }}</figcaption>
+  {{- end -}}
+  <audio controls preload="metadata" src="{{ $src | relURL }}">
+    Your browser does not support the audio element.
+  </audio>
+  {{- with $caption -}}
+    <p class="publicationAudioCaption">{{ . }}</p>
+  {{- end -}}
+</figure>

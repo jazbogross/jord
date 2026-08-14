@@ -7,6 +7,12 @@ const NAME_FEEDBACK_VOTE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 const DEFAULT_GARDEN_NAME_FONT_SIZE_PX = 20;
 const MIN_GARDEN_NAME_FONT_SIZE_PX = 10;
 const MAX_GARDEN_NAME_FONT_SIZE_PX = 72;
+const GARDEN_WORD_DISPLAY_FONT_SCALE = 2;
+const PUBLICATION_RAIN_WORD_LIMIT = 200;
+const PUBLICATION_RAIN_OUT_DURATION_MS = 1600;
+const PUBLICATION_RAIN_IN_DURATION_MS = 1900;
+const PUBLICATION_RULE_WIPE_DURATION_MS = 420;
+const PUBLICATION_RAIN_MAX_STAGGER_MS = 650;
 
 const state = {
   isDanish: true,
@@ -15,6 +21,8 @@ const state = {
   nameFeedbackByName: {},
   soundFiles: [],
   svgWords: [],
+  isGardenArchive: false,
+  publication: null,
   activeWordSpan: null,
   activeCommentsDiv: null,
   activeCommentForm: null,
@@ -30,6 +38,9 @@ let isGardenScrollFallbackBound = false;
 document.addEventListener('DOMContentLoaded', init);
 
 function init() {
+  state.isDanish = getBrowserLanguage().includes('da');
+  initPublication();
+
   elements = {
     container: document.getElementById('word-container'),
     introContainer: document.getElementById('introContainer'),
@@ -66,11 +77,11 @@ function init() {
     sentimentButtons: Array.from(document.querySelectorAll('.sentimentButton'))
   };
 
+  state.isGardenArchive = Boolean(document.querySelector('[data-garden-archive]'));
+
   if (!elements.container) {
     return;
   }
-
-  state.isDanish = getBrowserLanguage().includes('da');
 
   applyCopy();
   bindUi();
@@ -101,11 +112,11 @@ function applyCopy() {
   }
 
   if (elements.introTitle) {
-    elements.introTitle.textContent = copy.introTitle;
+    elements.introTitle.textContent = state.isGardenArchive ? copy.archiveIntroTitle : copy.introTitle;
   }
 
   if (elements.introText) {
-    elements.introText.textContent = copy.introText;
+    elements.introText.textContent = state.isGardenArchive ? copy.archiveIntroText : copy.introText;
   }
 
   if (elements.wordInput) {
@@ -117,7 +128,9 @@ function applyCopy() {
   }
 
   if (elements.nameFeedbackPrompt) {
-    elements.nameFeedbackPrompt.textContent = copy.nameFeedbackPrompt;
+    elements.nameFeedbackPrompt.textContent = state.isGardenArchive
+      ? copy.archiveNameFeedbackPrompt
+      : copy.nameFeedbackPrompt;
   }
 
   if (elements.nameFeedbackComment) {
@@ -193,6 +206,521 @@ function bindUi() {
   window.addEventListener('resize', ensureGardenHasScrollableContent);
 }
 
+
+function initPublication() {
+  const root = document.querySelector('[data-publication]');
+  if (!root) {
+    return;
+  }
+
+  const header = root.querySelector('.publicationHeader');
+  const index = root.querySelector('.publicationIndex');
+  const indexTrigger = root.querySelector('[data-publication-index-trigger]');
+  const indexHeading = root.querySelector('.publicationIndexHeading');
+  const indexList = root.querySelector('.publicationIndexList');
+  const links = Array.from(root.querySelectorAll('[data-publication-link]'));
+  const texts = Array.from(root.querySelectorAll('[data-publication-text]'));
+
+  if (!links.length || !texts.length) {
+    return;
+  }
+
+  state.publication = {
+    root,
+    header,
+    index,
+    indexTrigger,
+    indexHeading,
+    indexList,
+    links,
+    texts,
+    activeSlug: '',
+    isTransitioning: false,
+    reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  };
+
+  links.forEach((link) => {
+    link.addEventListener('click', handlePublicationLinkClick);
+  });
+
+  if (indexTrigger) {
+    indexTrigger.addEventListener('click', handlePublicationIndexTriggerClick);
+  }
+
+  window.addEventListener('hashchange', handlePublicationHashChange);
+
+  const requestedSlug = getPublicationSlugFromHash();
+  const hasRequestedText = texts.some((text) => text.dataset.publicationText === requestedSlug);
+
+  if (hasRequestedText) {
+    activatePublicationText(requestedSlug, { animate: false, updateHash: false, focus: false });
+  } else {
+    clearActivePublicationText();
+  }
+
+}
+
+function handlePublicationLinkClick(event) {
+  const link = event.currentTarget;
+  const slug = link.dataset.publicationLink;
+
+  if (!slug) {
+    return;
+  }
+
+  event.preventDefault();
+  activatePublicationText(slug, {
+    animate: true,
+    updateHash: true,
+    focus: true,
+    forceAnimate: true
+  });
+}
+
+function handlePublicationIndexTriggerClick(event) {
+  event.preventDefault();
+  returnToPublicationIndex({ animate: true, focus: true });
+}
+
+function handlePublicationHashChange() {
+  if (!state.publication) {
+    return;
+  }
+
+  const slug = getPublicationSlugFromHash();
+  if (slug) {
+    activatePublicationText(slug, { animate: false, updateHash: false, focus: true });
+  } else {
+    returnToPublicationIndex({ animate: false, focus: true });
+  }
+}
+
+function getPublicationSlugFromHash() {
+  return decodeURIComponent(window.location.hash.replace(/^#/, '')).trim();
+}
+
+function activatePublicationText(slug, options = {}) {
+  const publication = state.publication;
+  if (!publication || !slug || publication.isTransitioning) {
+    return;
+  }
+
+  const nextText = publication.texts.find((text) => text.dataset.publicationText === slug);
+  if (!nextText) {
+    return;
+  }
+
+  const shouldAnimate = options.animate
+    && !publication.reducedMotion
+    && (publication.activeSlug !== slug || options.forceAnimate);
+
+  if (!shouldAnimate) {
+    setActivePublicationText(slug);
+    updatePublicationHash(slug, options.updateHash);
+    if (options.focus) {
+      scrollPublicationTextIntoView(nextText, { behavior: 'smooth' });
+      focusPublicationText(nextText);
+    }
+    return;
+  }
+
+  transitionPublicationText(slug, nextText, options);
+}
+
+function transitionPublicationText(slug, nextText, options) {
+  const publication = state.publication;
+  const currentText = getActivePublicationText();
+  const outgoingSources = [publication.header, publication.indexHeading, publication.indexList, currentText].filter(Boolean);
+  const rainOutMs = getPublicationRainPhaseMs('out');
+  const rainInMs = getPublicationRainPhaseMs('in');
+  let rainLayer = null;
+
+  publication.isTransitioning = true;
+  publication.root.classList.add('is-wiping-rules');
+
+  window.setTimeout(() => {
+    rainLayer = createPublicationRainLayer();
+
+    outgoingSources.forEach((source) => {
+      createPublicationRainTokens(source, rainLayer, 'out');
+    });
+
+    publication.root.classList.add('is-raining');
+
+    window.setTimeout(() => {
+      removePublicationRainTokens(rainLayer, 'out');
+      setActivePublicationText(slug, { preparing: true });
+      updatePublicationHash(slug, options.updateHash);
+      scrollPublicationTextIntoView(nextText);
+
+      requestAnimationFrame(() => {
+        scrollPublicationTextIntoView(nextText);
+
+        requestAnimationFrame(() => {
+          createPublicationRainTokens(nextText, rainLayer, 'in');
+
+          window.setTimeout(() => {
+            publication.root.classList.remove('is-wiping-rules', 'is-raining');
+            nextText.classList.remove('is-preparing');
+            if (rainLayer) {
+              rainLayer.classList.add('is-fading');
+            }
+            if (options.focus) {
+              focusPublicationText(nextText);
+            }
+          }, rainInMs);
+
+          window.setTimeout(() => {
+            if (rainLayer) {
+              rainLayer.remove();
+            }
+            publication.isTransitioning = false;
+          }, rainInMs + 260);
+        });
+      });
+    }, rainOutMs);
+  }, PUBLICATION_RULE_WIPE_DURATION_MS);
+}
+
+function returnToPublicationIndex(options = {}) {
+  const publication = state.publication;
+  if (!publication || publication.isTransitioning) {
+    return;
+  }
+
+  const shouldAnimate = options.animate && !publication.reducedMotion;
+  if (!shouldAnimate) {
+    clearPublicationHash();
+    clearActivePublicationText();
+    scrollPublicationIndexIntoView();
+    focusPublicationIndexTrigger();
+    return;
+  }
+
+  transitionPublicationIndex(options);
+}
+
+function transitionPublicationIndex(options = {}) {
+  const publication = state.publication;
+  const currentText = getActivePublicationText();
+  const outgoingSources = [currentText, publication.header, publication.indexHeading, publication.indexList].filter(Boolean);
+  const incomingSources = [publication.header, publication.indexHeading, publication.indexList].filter(Boolean);
+  const rainOutMs = getPublicationRainPhaseMs('out');
+  const rainInMs = getPublicationRainPhaseMs('in');
+  let rainLayer = null;
+
+  publication.isTransitioning = true;
+  publication.root.classList.add('is-wiping-rules', 'is-index-preparing');
+
+  window.setTimeout(() => {
+    rainLayer = createPublicationRainLayer();
+
+    outgoingSources.forEach((source) => {
+      createPublicationRainTokens(source, rainLayer, 'out');
+    });
+
+    publication.root.classList.add('is-raining');
+
+    window.setTimeout(() => {
+      removePublicationRainTokens(rainLayer, 'out');
+      clearPublicationHash();
+      clearActivePublicationText();
+      scrollPublicationIndexIntoView();
+
+      incomingSources.forEach((source) => {
+        createPublicationRainTokens(source, rainLayer, 'in');
+      });
+
+      window.setTimeout(() => {
+        publication.root.classList.remove('is-wiping-rules', 'is-raining', 'is-index-preparing');
+        if (rainLayer) {
+          rainLayer.classList.add('is-fading');
+        }
+        if (options.focus) {
+          focusPublicationIndexTrigger();
+        }
+      }, rainInMs);
+
+      window.setTimeout(() => {
+        if (rainLayer) {
+          rainLayer.remove();
+        }
+        publication.isTransitioning = false;
+      }, rainInMs + 260);
+    }, rainOutMs);
+  }, PUBLICATION_RULE_WIPE_DURATION_MS);
+}
+
+function clearPublicationHash() {
+  if (window.location.hash) {
+    window.history.pushState(null, '', `${window.location.pathname}${window.location.search}`);
+  }
+}
+
+function scrollPublicationIndexIntoView() {
+  const publication = state.publication;
+  if (!publication) {
+    return;
+  }
+
+  const target = publication.header || publication.index || publication.root;
+  target.scrollIntoView({ block: 'start', behavior: 'auto' });
+}
+
+function scrollPublicationTextIntoView(text, options = {}) {
+  if (!text) {
+    return;
+  }
+
+  const style = window.getComputedStyle(text);
+  const scrollMarginTop = Number.parseFloat(style.scrollMarginTop) || 0;
+  const top = Math.max(0, text.getBoundingClientRect().top + window.scrollY - scrollMarginTop);
+
+  window.scrollTo({
+    top,
+    left: window.scrollX,
+    behavior: options.behavior || 'auto'
+  });
+}
+
+function focusPublicationIndexTrigger() {
+  const trigger = state.publication?.indexTrigger;
+  if (!trigger) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    trigger.focus({ preventScroll: true });
+  });
+}
+
+function setActivePublicationText(slug, options = {}) {
+  const publication = state.publication;
+  if (!publication) {
+    return;
+  }
+
+  publication.activeSlug = slug;
+  publication.root.classList.add('has-active-text');
+
+  publication.links.forEach((link) => {
+    const isActive = link.dataset.publicationLink === slug;
+    link.classList.toggle('is-active', isActive);
+    if (isActive) {
+      link.setAttribute('aria-current', 'true');
+    } else {
+      link.removeAttribute('aria-current');
+    }
+  });
+
+  publication.texts.forEach((text) => {
+    const isActive = text.dataset.publicationText === slug;
+    text.classList.toggle('is-active', isActive);
+    text.classList.toggle('is-preparing', Boolean(options.preparing && isActive));
+  });
+}
+
+function clearActivePublicationText() {
+  const publication = state.publication;
+  if (!publication) {
+    return;
+  }
+
+  publication.activeSlug = '';
+  publication.root.classList.remove('has-active-text');
+
+  publication.links.forEach((link) => {
+    link.classList.remove('is-active');
+    link.removeAttribute('aria-current');
+  });
+
+  publication.texts.forEach((text) => {
+    text.classList.remove('is-active', 'is-preparing');
+  });
+}
+
+function updatePublicationHash(slug, shouldUpdateHash) {
+  if (!shouldUpdateHash || window.location.hash === `#${slug}`) {
+    return;
+  }
+
+  window.history.pushState(null, '', `#${encodeURIComponent(slug)}`);
+}
+
+function getActivePublicationText() {
+  if (!state.publication || !state.publication.activeSlug) {
+    return null;
+  }
+
+  return state.publication.texts.find((text) => (
+    text.dataset.publicationText === state.publication.activeSlug
+  )) || null;
+}
+
+function focusPublicationText(text) {
+  requestAnimationFrame(() => {
+    text.focus({ preventScroll: true });
+  });
+}
+
+function createPublicationRainLayer() {
+  const layer = document.createElement('div');
+  layer.className = 'publicationRainLayer';
+  layer.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(layer);
+  return layer;
+}
+
+function getPublicationRainPhaseMs(direction) {
+  const duration = direction === 'out'
+    ? PUBLICATION_RAIN_OUT_DURATION_MS
+    : PUBLICATION_RAIN_IN_DURATION_MS;
+  return duration + PUBLICATION_RAIN_MAX_STAGGER_MS + 120;
+}
+
+function removePublicationRainTokens(layer, direction) {
+  if (!layer) {
+    return;
+  }
+
+  layer.querySelectorAll(`.publicationRainWord.is-raining-${direction}`).forEach((token) => {
+    token.remove();
+  });
+}
+
+function createPublicationRainTokens(source, layer, direction) {
+  if (!source || !layer) {
+    return;
+  }
+
+  const limit = direction === 'out'
+    ? Math.ceil(PUBLICATION_RAIN_WORD_LIMIT / 2)
+    : PUBLICATION_RAIN_WORD_LIMIT;
+  const words = collectViewportWords(source, limit);
+
+  words.forEach((word, index) => {
+    const token = document.createElement('span');
+    const delay = Math.min(
+      PUBLICATION_RAIN_MAX_STAGGER_MS,
+      index * 26 + (index === 0 ? 0 : randomNumber(0, 150))
+    );
+    const drift = randomNumber(-80, 80);
+    const rotation = randomNumber(-14, 14);
+
+    token.className = 'publicationRainWord';
+    token.textContent = getPublicationRainTokenText(word.text, word.style.textTransform);
+    token.style.left = `${word.rect.left}px`;
+    token.style.top = `${word.rect.top}px`;
+    token.style.width = `${word.rect.width}px`;
+    token.style.fontFamily = word.style.fontFamily;
+    token.style.fontSize = word.style.fontSize;
+    token.style.fontWeight = word.style.fontWeight;
+    token.style.fontStyle = word.style.fontStyle;
+    token.style.lineHeight = word.style.lineHeight;
+    token.style.letterSpacing = word.style.letterSpacing;
+    token.style.textTransform = word.style.textTransform;
+    token.style.color = word.style.color;
+    token.style.setProperty('--rain-delay', `${delay}ms`);
+    token.style.setProperty('--rain-drift', `${drift}px`);
+    token.style.setProperty('--rain-rotation', `${rotation}deg`);
+
+    layer.appendChild(token);
+    alignPublicationRainToken(token, word.rect);
+    token.classList.add(`is-raining-${direction}`);
+  });
+}
+
+function getPublicationRainTokenText(text, textTransform) {
+  if (textTransform === 'uppercase') {
+    return text.toLocaleUpperCase();
+  }
+
+  if (textTransform === 'lowercase') {
+    return text.toLocaleLowerCase();
+  }
+
+  return text;
+}
+
+function alignPublicationRainToken(token, sourceRect) {
+  const textNode = token.firstChild;
+  if (!textNode) {
+    return;
+  }
+
+  const range = document.createRange();
+  range.selectNodeContents(textNode);
+  const tokenTextRect = range.getBoundingClientRect();
+  range.detach();
+
+  const currentLeft = Number.parseFloat(token.style.left) || 0;
+  const currentTop = Number.parseFloat(token.style.top) || 0;
+  token.style.left = `${currentLeft + sourceRect.left - tokenTextRect.left}px`;
+  token.style.top = `${currentTop + sourceRect.top - tokenTextRect.top}px`;
+}
+
+function collectViewportWords(source, limit) {
+  if (limit <= 0) {
+    return [];
+  }
+
+  const words = [];
+  const walker = document.createTreeWalker(source, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      if (!node.nodeValue.trim() || !node.parentElement) {
+        return NodeFilter.FILTER_REJECT;
+      }
+
+      const style = window.getComputedStyle(node.parentElement);
+      if (style.display === 'none') {
+        return NodeFilter.FILTER_REJECT;
+      }
+
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+
+  while (walker.nextNode() && words.length < limit) {
+    const node = walker.currentNode;
+    const text = node.nodeValue;
+    const matches = text.matchAll(/\S+/g);
+
+    for (const match of matches) {
+      if (words.length >= limit) {
+        break;
+      }
+
+      const range = document.createRange();
+      range.setStart(node, match.index);
+      range.setEnd(node, match.index + match[0].length);
+      const rect = range.getBoundingClientRect();
+      range.detach();
+
+      if (!isRectInViewport(rect)) {
+        continue;
+      }
+
+      words.push({
+        text: match[0],
+        rect,
+        style: window.getComputedStyle(node.parentElement)
+      });
+    }
+  }
+
+  return words;
+}
+
+function isRectInViewport(rect) {
+  return rect.width > 0
+    && rect.height > 0
+    && rect.bottom >= 0
+    && rect.top <= window.innerHeight
+    && rect.right >= 0
+    && rect.left <= window.innerWidth;
+}
+
+
 async function loadGardenContent() {
   const [words, names, soundManifest, svgManifest, nameFeedbackByName] = await Promise.all([
     fetchStaticJson('words.json', []),
@@ -230,7 +758,7 @@ function createMatrixItem(item) {
   const span = document.createElement('span');
   const randomX = Math.floor(Math.random() * 100) + 10;
   const randomY = Math.floor(Math.random() * 100) + 10;
-  const fontSize = getGardenItemFontSize(item);
+  const fontSize = getGardenItemDisplayFontSize(item);
 
   wrapper.className = item.type === 'name' ? 'word garden-name' : 'word';
   wrapper.style.paddingLeft = `${randomX}px`;
@@ -480,46 +1008,50 @@ async function fetchWordComments(word) {
 
 function showWordComments(word, comments, wordElement) {
   const commentsDiv = document.createElement('div');
-  const form = document.createElement('form');
-  const hiddenWordInput = document.createElement('input');
-  const textarea = document.createElement('textarea');
-  const button = document.createElement('button');
-  const buttonWrap = document.createElement('div');
   const copy = getCopy();
 
   commentsDiv.className = 'comments-div';
   commentsDiv.style.paddingTop = window.getComputedStyle(wordElement).getPropertyValue('padding-top');
 
-  form.className = 'comment-form';
+  if (!state.isGardenArchive) {
+    const form = document.createElement('form');
+    const hiddenWordInput = document.createElement('input');
+    const textarea = document.createElement('textarea');
+    const button = document.createElement('button');
+    const buttonWrap = document.createElement('div');
 
-  hiddenWordInput.type = 'hidden';
-  hiddenWordInput.name = 'commentWord';
-  hiddenWordInput.value = word.toLowerCase();
+    form.className = 'comment-form';
 
-  textarea.name = 'comment';
-  textarea.placeholder = copy.wordCommentPlaceholder;
+    hiddenWordInput.type = 'hidden';
+    hiddenWordInput.name = 'commentWord';
+    hiddenWordInput.value = word.toLowerCase();
 
-  button.type = 'submit';
-  button.textContent = copy.send;
+    textarea.name = 'comment';
+    textarea.placeholder = copy.wordCommentPlaceholder;
 
-  buttonWrap.className = 'button-div';
-  buttonWrap.appendChild(button);
+    button.type = 'submit';
+    button.textContent = copy.send;
 
-  form.appendChild(hiddenWordInput);
-  form.appendChild(textarea);
-  form.appendChild(buttonWrap);
-  form.addEventListener('submit', submitWordComment);
+    buttonWrap.className = 'button-div';
+    buttonWrap.appendChild(button);
 
-  wordElement.appendChild(form);
+    form.appendChild(hiddenWordInput);
+    form.appendChild(textarea);
+    form.appendChild(buttonWrap);
+    form.addEventListener('submit', submitWordComment);
+
+    wordElement.appendChild(form);
+    state.activeCommentForm = form;
+  }
+
   wordElement.insertAdjacentElement('afterend', commentsDiv);
-
-  state.activeCommentForm = form;
   state.activeCommentsDiv = commentsDiv;
 
   if (!comments.length) {
     const emptyComment = document.createElement('div');
     emptyComment.className = 'comment';
-    emptyComment.textContent = copy.noWordComments.replace('{word}', word);
+    const emptyText = state.isGardenArchive ? copy.archiveNoWordComments : copy.noWordComments;
+    emptyComment.textContent = emptyText.replace('{word}', word);
     commentsDiv.appendChild(emptyComment);
     return;
   }
@@ -595,16 +1127,29 @@ async function openNameFeedbackDialog(nameItem) {
     elements.nameFeedbackForm.reset();
   }
 
-  elements.feedbackName.value = nameItem.name;
-  elements.nameFeedbackTitle.textContent = formatGardenNameForDisplay(nameItem.name);
-  elements.nameFeedbackStatus.textContent = '';
-  setNameFeedbackControlsDisabled(false);
+  if (elements.feedbackName) {
+    elements.feedbackName.value = nameItem.name;
+  }
+
+  if (elements.nameFeedbackTitle) {
+    elements.nameFeedbackTitle.textContent = formatGardenNameForDisplay(nameItem.name);
+  }
+
+  if (elements.nameFeedbackStatus) {
+    elements.nameFeedbackStatus.textContent = '';
+  }
+
+  setNameFeedbackControlsDisabled(state.isGardenArchive);
   resetTextareaHeight(elements.nameFeedbackComment);
 
   const feedback = fetchNameFeedback(nameItem.name);
   renderNameFeedback(feedback);
   collapseNameFeedbackSections();
   showOverlay(elements.nameFeedbackContainer);
+
+  if (state.isGardenArchive) {
+    return;
+  }
 
   if (!syncNameFeedbackVoteLimitState(nameItem.name)) {
     focusNameFeedbackComment();
@@ -638,6 +1183,10 @@ function renderNameFeedback(feedback) {
 }
 
 function renderFeedbackList(container, comments, emptyText) {
+  if (!container) {
+    return;
+  }
+
   container.innerHTML = '';
 
   if (!comments.length) {
@@ -1245,6 +1794,16 @@ function getGardenItemFontSize(item) {
   return Number.isFinite(numericFontSize) ? numericFontSize : 20;
 }
 
+function getGardenItemDisplayFontSize(item) {
+  const fontSize = getGardenItemFontSize(item);
+
+  if (item.type === 'word') {
+    return fontSize * GARDEN_WORD_DISPLAY_FONT_SCALE;
+  }
+
+  return fontSize;
+}
+
 function getGardenNameBaseFontSize(name) {
   return DEFAULT_GARDEN_NAME_FONT_SIZE_PX;
 }
@@ -1303,11 +1862,14 @@ function getCopy() {
       send: 'Send',
       introTitle: 'Rønnebæksholms Virtuelle Have',
       introText: "Denne hjemmeside lader dig indsende ord, baseret på hvad du oplever i Rønnebæksholm Haven, lytte til havens lyde, og foreslå et nyt navn til haven. Klik på ordene og navneforslagene for at skrive og læse kommentarer.",
+      archiveIntroTitle: 'Rønnebæksholms Virtuelle Have — arkiv',
+      archiveIntroText: 'Dette er et arkiv over den virtuelle have og navngivningsprocessen. Du kan stadig besøge ordene, lydene, navnene og kommentarerne, men arkivet modtager ikke længere nye bidrag.',
       wordInputPlaceholder: 'Dit ord',
       nameInputPlaceholder: 'Dit navneforslag',
       wordCommentPlaceholder: 'Tilføj en kommentar...',
       nameCommentPlaceholder: 'Tilføj en kommentar hvis du vil...',
       nameFeedbackPrompt: 'Kan du lide navnet?',
+      archiveNameFeedbackPrompt: 'Kommentarer indsamlet under navngivningsprocessen.',
       nameFeedbackColumnsTitle: 'Se kommentarer',
       nameFeedbackPositiveButton: 'JEG KAN GODT LIDE NAVNET',
       nameFeedbackNegativeButton: 'JEG KAN IKKE LIDE NAVNET',
@@ -1315,6 +1877,7 @@ function getCopy() {
       positiveCommentsTitle: 'Positive kommentarer',
       negativeCommentsTitle: 'Negative kommentarer',
       noWordComments: 'Der er endnu ikke blevet kommenteret på "{word}". Du kan skrive den første kommentar.',
+      archiveNoWordComments: 'Der blev ikke indsamlet kommentarer til "{word}".',
       noPositiveComments: 'Der er ingen positive kommentarer.',
       noNegativeComments: 'Der er ingen negative kommentarer.',
       wordSubmissionMessage: 'Dit ord er sendt til godkendelse',
@@ -1337,11 +1900,14 @@ function getCopy() {
     send: 'Send',
     introTitle: 'Rønnebæksholm Virtual Garden',
     introText: "This website lets you send a word based on what you notice in the Rønnebæksholm Garden, listen to its sounds, and suggest a new name for the garden. Click on the words and the names to read and write comments.",
+    archiveIntroTitle: 'Rønnebæksholm Virtual Garden — archive',
+    archiveIntroText: 'This is an archive of the virtual garden and the naming process. You can still visit the words, sounds, names, and comments, but the archive no longer accepts new contributions.',
     wordInputPlaceholder: 'Your word',
     nameInputPlaceholder: 'Your garden name',
     wordCommentPlaceholder: 'Write your comment...',
     nameCommentPlaceholder: 'Write an optional comment...',
     nameFeedbackPrompt: 'How does this name sound to you?',
+    archiveNameFeedbackPrompt: 'Comments gathered during the naming process.',
     nameFeedbackColumnsTitle: 'View comments',
     nameFeedbackPositiveButton: 'I LIKE THIS NAME',
     nameFeedbackNegativeButton: "I DON'T LIKE THIS NAME",
@@ -1349,6 +1915,7 @@ function getCopy() {
     positiveCommentsTitle: 'Positive comments',
     negativeCommentsTitle: 'Negative comments',
     noWordComments: 'There are still no comments on "{word}". You can write the first comment.',
+    archiveNoWordComments: 'No comments were collected for "{word}".',
     noPositiveComments: 'There are no positive comments yet.',
     noNegativeComments: 'There are no negative comments yet.',
     wordSubmissionMessage: 'Your word has been sent for approval',

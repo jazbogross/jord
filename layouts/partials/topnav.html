@@ -1,10 +1,11 @@
 {{ define "topnav" }}
 
-<a href="https://naarduikkeerher.dk/roennebaeksholm"><div id="stldiv"></div></a>
-<div id="actionButtons">
-  <div id="wordAgain" class="actionButton">Send endnu et ord fra haven</div>
-  <div id="suggestName" class="actionButton">SUGGEST A NAME FOR THE GARDEN</div>
-</div>
+{{ if eq .Section "garden" }}
+<a href="https://naarduikkeerher.dk/roennebaeksholm" aria-label="Rønnebæksholm"><div id="stldiv"></div></a>
+<nav id="actionButtons" aria-label="Garden archive navigation">
+  <a href="/" class="actionButton">Publication</a>
+  <span class="actionButton archiveBadge" aria-current="page">Garden archive</span>
+</nav>
 
 <script type="module">
     import * as THREE from 'https://unpkg.com/three@0.156.1/build/three.module.js';
@@ -19,11 +20,9 @@
 
       scene = new THREE.Scene();
 
-  // Add ambient light
-  const ambientLight = new THREE.AmbientLight(0x999999); // Soft white light
+  const ambientLight = new THREE.AmbientLight(0x999999);
   scene.add(ambientLight);
 
-  // Add directional light
   const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 5);
   directionalLight.position.set(1, 1, 1).normalize();
   scene.add(directionalLight);
@@ -31,31 +30,26 @@
       const loader = new STLLoader();
 loader.load('/lillehaand.stl', (geometry) => {
 
-      // Compute vertex normals for proper shading
       geometry.computeVertexNormals();
 
-      // Create a silver-like material
       const material = new THREE.MeshPhongMaterial({
-      color: 0xC0C0C0,    // Silver color
-      specular: 0x111111, // Specular highlights
-      shininess: 100      // Shininess factor
+      color: 0xC0C0C0,
+      specular: 0x111111,
+      shininess: 100
     });
 
     mesh = new THREE.Mesh(geometry, material);
 
 
-  // Compute bounding box to get the dimensions of the model
   geometry.computeBoundingBox();
   const boundingBox = geometry.boundingBox;
   
-  // Find the longest dimension of the bounding box
   const maxAxis = Math.max(
     boundingBox.max.x - boundingBox.min.x,
     boundingBox.max.y - boundingBox.min.y,
     boundingBox.max.z - boundingBox.min.z
   );
 
-  // Scale the mesh so its longest dimension is 1 unit
   const scale = 0.8 / maxAxis;
   mesh.scale.set(scale, scale, scale);
 
@@ -86,6 +80,10 @@ loader.load('/lillehaand.stl', (geometry) => {
     animate();
 
 </script>
-
+{{ else if .IsHome }}
+<nav id="publicationNav" aria-label="Publication navigation">
+  <a href="/garden/">Garden archive</a>
+</nav>
+{{ end }}
 
 {{ end }}

@@ -1,0 +1,84 @@
+{{ define "main" }}
+{{ $bundle := site.GetPage "texts" }}
+{{ $texts := slice }}
+{{ with $bundle }}
+  {{ range .Resources.ByType "page" }}
+    {{ if not .Draft }}
+      {{ $texts = $texts | append . }}
+    {{ end }}
+  {{ end }}
+  {{ $texts = sort $texts "Params.weight" "asc" }}
+{{ end }}
+
+<main class="publication" data-publication>
+  <header class="publicationHeader">
+    <h1>Tyvens Have</h1>
+    <p class="publicationIntro">
+      Her taenkte jeg der kunne staa en eller anden introduktion som ligesom samler op paa hvad teksterne ja giver noget kontejsts du ved ja, jeg skriver bare lidt saa der lige staar nogle ord osv. Ja, man kunne taenke over om det skal vaere en kort tekst her og saa en mere uddybende teks et separat sted hvor man trykker for at laese mere.
+    </p>
+  </header>
+
+  {{ if gt (len $texts) 0 }}
+    <section class="publicationIndex" aria-labelledby="publicationIndexTitle">
+      <h2 id="publicationIndexTitle" class="publicationIndexHeading">
+        <button type="button" data-publication-index-trigger>OVERSIGT</button>
+      </h2>
+      <ol class="publicationIndexList">
+        {{ range $texts }}
+          {{ $slug := .Params.slug | default (.Title | urlize) }}
+          {{ $genreLabel := .Params.genre_label | default (.Params.genre | humanize) }}
+          <li>
+            <a class="publicationIndexItem" href="#{{ $slug }}" data-publication-link="{{ $slug }}">
+              <span class="publicationIndexTitle">{{ .Title }}</span>
+              <span class="publicationIndexMeta">
+                {{ with .Params.author }}<span class="publicationIndexAuthor">{{ . }}</span>{{ end }}
+                {{ with .Params.credit }}<span class="publicationIndexCredit">{{ . }}</span>{{ end }}
+                {{ with $genreLabel }}<span class="publicationIndexGenre">{{ . }}</span>{{ end }}
+              </span>
+            </a>
+          </li>
+        {{ end }}
+      </ol>
+
+      <section class="publicationReader" aria-live="polite">
+        {{ range $texts }}
+          {{ $slug := .Params.slug | default (.Title | urlize) }}
+          {{ $genre := .Params.genre | default "prose" }}
+          <article class="publicationText genre-{{ $genre | urlize }}" id="{{ $slug }}" data-publication-text="{{ $slug }}" tabindex="-1">
+            <header class="publicationTextHeader">
+              <h2>{{ .Title }}</h2>
+              {{ if ne $genre "drama" }}
+                {{ partial "publication-audio.html" . }}
+              {{ end }}
+            </header>
+            {{ if eq $genre "drama" }}
+              {{ with .Params.characters }}
+                <section class="dramaCharacters" aria-labelledby="characters-{{ $slug }}">
+                  <h3 id="characters-{{ $slug }}">Karakterer</h3>
+                  <ul>
+                    {{ range . }}<li>{{ . }}</li>{{ end }}
+                  </ul>
+                </section>
+              {{ end }}
+              {{ partial "publication-audio.html" . }}
+            {{ end }}
+            <div class="publicationTextBody">
+              {{ $content := .Content }}
+              {{ if eq $genre "drama" }}
+                {{ $content = replaceRE `(?s)<p><strong>([^<(]+?)\s*(\([^<]+\))</strong>:\s*(.*?)</p>` `<p class="dramaDialogue"><span class="dramaSpeaker dramaSpeaker--annotated" tabindex="0"><span class="dramaSpeakerName">$1</span><span class="dramaSpeakerNote" role="tooltip">$2</span></span><span class="dramaSpeech">$3</span></p>` $content }}
+                {{ $content = replaceRE `(?s)<p><strong>([^<]+)</strong>:\s*(.*?)</p>` `<p class="dramaDialogue"><span class="dramaSpeaker"><span class="dramaSpeakerName">$1</span></span><span class="dramaSpeech">$2</span></p>` $content }}
+              {{ end }}
+              {{ $content | safeHTML }}
+            </div>
+          </article>
+        {{ end }}
+      </section>
+    </section>
+  {{ else }}
+    <section class="publicationEmpty" aria-labelledby="publicationEmptyTitle">
+      <h2 id="publicationEmptyTitle">Texts are being prepared</h2>
+      <p>Add Markdown files to <code>content/texts/</code> with title, author, weight, and slug front matter.</p>
+    </section>
+  {{ end }}
+</main>
+{{ end }}

@@ -9,9 +9,3 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-
-  [functions.send-email]
-    schedule = "0 18 * * *"
-
-  [functions.deploy]
-    schedule = "0 0 * * *"

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "hugo",
+    "test": "playwright test --project=chromium"
   },
   "keywords": [],
   "author": "",
@@ -12,5 +13,9 @@
     "node-fetch": "^2.7.0",
     "nodemailer": "^7.0.13"
   },
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^26.1.0"
+  }
 }

@@ -2,17 +2,23 @@
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>{{ $.Site.Title }}</title>
+<title>{{ if .IsHome }}{{ $.Site.Title }}{{ else }}{{ .Title }} | {{ $.Site.Title }}{{ end }}</title>
 <meta name="author" content="{{ .Site.Title }}">
-<meta name="description" content="indsamlede ord">
+<meta name="description" content="{{ with .Description }}{{ . }}{{ else }}Texts and archive from the process of renaming the garden.{{ end }}">
 <meta name="robots" content="index, follow" />
 <meta name="MobileOptimized" content="320">
 <meta name="HandheldFriendly" content="True">
 
+{{ if .IsHome }}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400&display=swap" rel="stylesheet">
+{{ end }}
+
 {{ partial "head-css.html" . }}
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 
-
+{{ if eq .Section "garden" }}
 <script type="importmap">
   {
     "imports": {
@@ -23,7 +29,7 @@
 </script>
 
 <script src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
-
+{{ end }}
 
 
 {{ end }}

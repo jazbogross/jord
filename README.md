@@ -1,118 +1,86 @@
 # Jord
 
-Jord is a Hugo site deployed on Netlify. The published HTML is mostly a shell; the actual garden is assembled in the browser from JSON files in `static/`, and Netlify Functions write visitor submissions back into those JSON files through GitHub API calls.
+Jord is a Hugo site deployed on Netlify. It now has two public surfaces:
 
-It's a static site with JSON-backed interaction:
+- `/` — an online publication of texts related to the process of renaming the garden.
+- `/garden/` — a read-only archive of the former participatory virtual garden.
 
-- Hugo builds the document shell and serves compiled assets.
-- `assets/js/main.js` fetches words, names, name feedback, SVG manifests, and audio manifests client side.
-- The browser renders an endless garden of visitor-submitted words, garden names, and sounds which the visitor can comment on.
-- Garden name feedback is capped to three votes per name per browser via a cookie, and each like/dislike changes that name's display size by `+1` or `-1`.
-- Netlify Functions rewrite the JSON files in GitHub.
-- Scheduled functions email a daily digest and trigger a rebuild so committed changes become visible on the live site.
-- The site is available in Danish and English, determined by the users browser.
+The publication is maintained with Markdown files in the headless `content/texts/` bundle. The archive still renders the historical garden from JSON files in `static/`, but visitors can no longer submit words, names, comments, or name feedback.
 
 ## Project structure
 
-### Hugo and frontend
+### Publication
 
-- `hugo.toml`: site config and base URL.
-- `layouts/_default/baseof.html`: base document shell and compiled JS include.
-- `layouts/_default/list.html`: homepage overlays, forms, and name-feedback dialog.
-- `layouts/partials/head.html`: metadata, CSS include, Netlify Identity widget, and import map.
-- `layouts/partials/topnav.html`: STL hand and fixed action buttons.
-- `assets/sass/style.scss`: all site styling.
-- `assets/js/main.js`: runtime app logic for rendering, overlays, submissions, motion, infinite scroll, per-name vote-limit cookies, and live name-size updates.
+- `layouts/index.html`: publication homepage, index, inline reader, and anchored text links.
+- `content/texts/index.md`: headless content bundle for publication texts.
+- `archetypes/text.md`: starter front matter for new publication texts.
+- `assets/js/main.js`: hash navigation and restrained viewport-limited word-rain transitions between texts.
+- `assets/sass/style.scss`: publication typography, index, reader, transition, responsive, and reduced-motion styles.
 
-### Static data and media
+Add a text by duplicating the example or using the archetype, then setting front matter like:
 
-- `static/words.json`: word records with `word`, `fontSize`, `date`, and `updated`.
-- `static/comments.json`: comment objects grouped by word key.
-- `static/names.json`: garden name records with `name`, `color`, `date`, and `lastUpdated`.
-- `static/name-feedback.json`: feedback keyed by normalized garden name, with `likes`, `dislikes`, `positiveComments`, and `negativeComments`.
-- `static/svgs.json`: manifest of words that should render as SVG artwork.
-- `static/svg/`: SVG assets.
-- `static/lydfiler.json`: manifest of audio files to place in the garden.
-- `static/lyd/`: audio assets.
-- `static/lillehaand.stl`: STL model used in the top navigation.
+```yaml
+---
+title: "Text title"
+author: "Author name"
+credit: ""
+genre: "essay"
+genre_label: "Essay"
+weight: 10
+slug: "text-title"
+audio:
+  src: ""
+  title: ""
+  caption: ""
+---
+```
 
+Direct links use `/#text-title`. Supported genre-specific presentation currently includes essays, poems, dramas, and conversations. Drama files also use a `characters` list in front matter. When `audio.src` is set, the player appears after the title; in dramas it appears after the character list.
 
+Publication Markdown can include a styled audio player with:
 
-## Broser Runtime
+```go-html-template
+{{< audio src="/lyd/have1.mp3" title="Audio title" caption="Optional caption." >}}
+```
 
-### Frontend rendering
+### Garden archive
 
-`assets/js/main.js` does all runtime assembly:
+- `content/garden/_index.md`: creates the `/garden/` archive route.
+- `layouts/garden/list.html`: read-only archive shell.
+- `layouts/partials/topnav.html`: publication/archive navigation and the STL hand only on `/garden/`.
+- `static/words.json`: archived word records with `word`, `fontSize`, `date`, and `updated`.
+- `static/comments.json`: archived comments grouped by word key.
+- `static/names.json`: archived garden name records.
+- `static/name-feedback.json`: archived feedback keyed by normalized garden name.
+- `static/svgs.json`, `static/svg/`: SVG artwork manifest and assets.
+- `static/lydfiler.json`, `static/lyd/`: audio manifest and files.
+- `static/lillehaand.stl`: STL model used in archive navigation.
 
-1. Reads browser language.
-2. Applies localized copy.
-3. Fetches `words.json`, `names.json`, `name-feedback.json`, `lydfiler.json`, and `svgs.json`.
-4. Renders one shuffled batch of words and names.
-5. Inserts audio elements into that batch.
-6. Sets up an `IntersectionObserver` so additional batches are appended before the user reaches the bottom.
+Archive behavior:
 
-### Word submission
+1. `assets/js/main.js` fetches the JSON manifests client side.
+2. Words, names, SVGs, and sounds are rendered into the garden.
+3. Clicking a word shows archived comments only; no comment form is created.
+4. Clicking a name shows archived feedback comments only; no voting/comment form is created.
+5. No new words, names, comments, votes, or archive exports can be submitted from the public archive.
 
-`submit-word`:
+### Netlify functions
 
-1. Verifies reCAPTCHA.
-2. Fetches `static/words.json` from GitHub.
-3. Decodes the submitted UTF-8 payload.
-4. Splits the submitted text on spaces.
-5. Increments `fontSize` on existing exact matches or appends new word entries.
-6. Commits the updated JSON back to GitHub with `[skip netlify]`.
+The former public submission functions remain deployed only as tombstones for old clients:
 
-### Word comment submission
+- `submit-word`
+- `submit-comment`
+- `submit-name`
+- `submit-name-feedback`
 
-`submit-comment`:
-
-1. Verifies reCAPTCHA.
-2. Fetches `static/comments.json` from GitHub.
-3. Appends a comment object under the submitted word key.
-4. Commits the updated JSON back to GitHub with `[skip netlify]`.
-
-### Garden name submission
-
-`submit-name`:
-
-1. Verifies reCAPTCHA.
-2. Fetches `static/names.json` from GitHub.
-3. Decodes the submitted UTF-8 payload.
-4. Normalizes spacing and matching by lowercased text.
-5. Overwrites `lastUpdated` for an existing normalized match or creates a new name record.
-6. Assigns a random hex color to new names.
-7. Commits the updated JSON back to GitHub with `[skip netlify]`.
-
-### Garden name feedback
-
-`submit-name-feedback`:
-
-1. Verifies reCAPTCHA.
-2. Fetches `static/name-feedback.json` and `static/names.json` from GitHub.
-3. Normalizes the submitted name key.
-4. Increments `likes` or `dislikes`.
-5. Appends the optional comment to `positiveComments` or `negativeComments`.
-6. Overwrites the matching name record's `lastUpdated` timestamp in `static/names.json`.
-7. Commits the updated JSON back to GitHub with `[skip netlify]`.
-
-### Scheduled functions
-
-`netlify.toml` schedules:
-
-- `send-email` at `0 18 * * *`
-- `deploy` at `0 0 * * *`
-
-Current behavior:
-
-- `send-email` fetches the deployed `words.json`, `names.json`, and `comments.json`, filters them to the last 24 hours, and emails a digest.
-- `deploy` POSTs to the Netlify build hook from `DEPLOY_HOOK`.
+Each returns HTTP `410` with a read-only archive message. Scheduled digest/deploy triggers are removed from `netlify.toml` because the public collection process is closed.
 
 ## Local development
 
 ### Prerequisites
 
-- Hugo `0.112.5`
-- Node.js and npm
+- Hugo `0.112.5` on Netlify; local builds currently work with Hugo `0.157.0` as well.
+- Node.js and npm for Netlify function dependencies.
 
 ### Install dependencies
 
@@ -120,12 +88,18 @@ Current behavior:
 npm install
 ```
 
-### Run Hugo only
+### Build to a temporary directory
+
+```bash
+hugo --destination /tmp/jord-hugo-build --cleanDestinationDir
+```
+
+### Run Hugo locally
 
 ```bash
 hugo server
 ```
 
-## Environment variables
+## Design source of truth
 
-The functions rely on these environment variables stored in Netlify ENVs.
+See `DESIGN.md` for the publication/archive design contract, motion rules, accessibility constraints, and open content questions.

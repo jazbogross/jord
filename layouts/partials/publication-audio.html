@@ -1,0 +1,16 @@
+{{- $audio := .Params.audio -}}
+{{- with $audio -}}
+  {{- with .src -}}
+    <figure class="publicationAudio">
+      {{- with $audio.title -}}
+        <figcaption class="publicationAudioTitle">{{ . }}</figcaption>
+      {{- end -}}
+      <audio controls preload="metadata" src="{{ . | relURL }}">
+        Your browser does not support the audio element.
+      </audio>
+      {{- with $audio.caption -}}
+        <p class="publicationAudioCaption">{{ . }}</p>
+      {{- end -}}
+    </figure>
+  {{- end -}}
+{{- end -}}

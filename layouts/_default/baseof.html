@@ -7,7 +7,7 @@
 
 </head>
 
-<body>
+<body class="{{ if .IsHome }}publication-page{{ else if eq .Section "garden" }}garden-archive-page{{ end }}">
 
   {{ block "topnav" . }}{{end}}
 
