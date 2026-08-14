@@ -4,7 +4,8 @@
   command = "hugo"
 
 [build.environment]
-  HUGO_VERSION = "0.112.5"
+  HUGO_VERSION = "0.157.0"
+  NODE_VERSION = "20.19.3"
 
 [functions]
   directory = "netlify/functions"
